@@ -1,0 +1,2754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>骨质疏松运动处方 · 生成与打印（单文件版）</title>
+
+  <style>
+/* ===== 全局 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --teal: #0e7c7b;
+  --teal-dark: #0a5c5b;
+  --teal-light: #e6f4f3;
+  --ink: #1f2937;
+  --sub: #6b7280;
+  --line: #e5e7eb;
+  --red: #c0392b;
+  --bg: #eef1f6;
+  --card: #ffffff;
+}
+
+html, body { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 15% -10%, #d9ecf5 0%, transparent 60%),
+    radial-gradient(900px 420px at 100% 0%, #d9efe8 0%, transparent 55%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+/* ===== 顶栏 ===== */
+.topbar {
+  background: linear-gradient(90deg, #0a5c5b, #0e7c7b 55%, #129a86);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: 0 2px 10px rgba(10, 92, 91, .25);
+}
+.topbar-inner {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.35);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 15px; letter-spacing: 1px;
+}
+.brand h1 { font-size: 19px; font-weight: 700; line-height: 1.2; }
+.brand p { font-size: 11px; opacity: .8; letter-spacing: .4px; }
+.topbar-actions { display: flex; gap: 10px; }
+
+/* ===== 按钮 ===== */
+.btn {
+  font: inherit; cursor: pointer; border: 0; border-radius: 10px;
+  padding: 10px 18px; font-size: 14px; font-weight: 600;
+  transition: transform .06s, box-shadow .15s, background .15s;
+  user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: #fff; color: var(--teal-dark); }
+.btn-primary:hover { background: #eafafa; }
+.btn-ghost {
+  background: rgba(255,255,255,.14);
+  color: #fff; border: 1px solid rgba(255,255,255,.4);
+}
+.btn-ghost:hover { background: rgba(255,255,255,.24); }
+.btn-soft {
+  background: var(--teal-light); color: var(--teal-dark);
+  border: 1px solid #bfe3e1; font-size: 13px; padding: 8px 14px;
+}
+.btn-soft:hover { background: #d7eeec; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ===== 布局 ===== */
+.layout {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: minmax(430px, 1fr) minmax(0, 860px);
+  gap: 22px;
+  align-items: start;
+}
+
+/* ===== 左侧面板 ===== */
+.panel { display: flex; flex-direction: column; gap: 16px; }
+.card {
+  background: var(--card);
+  border: 1px solid #eef0f4;
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 4px 14px rgba(30, 41, 59, .05);
+}
+.card-title {
+  font-size: 15px; font-weight: 700; margin-bottom: 12px;
+  color: #243b53;
+  display: flex; align-items: center; gap: 10px;
+  justify-content: space-between;
+}
+.card-title > span:first-child {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+}
+.card-badge {
+  font-size: 12px; font-weight: 600;
+  color: var(--sub);
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 2px 9px; border-radius: 999px;
+  flex: none;
+  max-width: 50%; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.card-badge.has-value {
+  background: var(--teal-light);
+  color: var(--teal-dark);
+  border-color: #bfe3e1;
+}
+.card-badge.has-warn {
+  background: #fef3e2; color: #92400e; border-color: #f3d9a8;
+}
+
+/* ===== 步骤指示器 ===== */
+.stepper {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #f6fbfb, #ffffff);
+  border: 1px solid #e0eded;
+  border-radius: 14px;
+  position: sticky; top: 78px; z-index: 5;
+  box-shadow: 0 2px 8px rgba(14,124,123,.06);
+}
+.step { display: flex; align-items: center; gap: 6px; flex: none; }
+.step-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #e5e7eb; color: #6b7280;
+  font-size: 12px; font-weight: 700;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #e5e7eb;
+  transition: all .2s;
+}
+.step-label { font-size: 12.5px; color: var(--sub); font-weight: 600; }
+.step.active .step-dot {
+  background: var(--teal); color: #fff;
+  box-shadow: 0 0 0 1px var(--teal), 0 0 0 4px rgba(14,124,123,.18);
+}
+.step.active .step-label { color: var(--teal-dark); }
+.step.done .step-dot {
+  background: #d1fae5; color: var(--teal-dark);
+  box-shadow: 0 0 0 1px #9fd4d1;
+}
+.step.done .step-label { color: var(--teal-dark); }
+.step-line { flex: 1; height: 2px; background: #e5e7eb; border-radius: 2px; }
+
+/* ===== 打印 CTA 卡 ===== */
+.print-cta {
+  background: linear-gradient(135deg, #f0faf9, #fff 60%);
+  border-color: var(--teal-light);
+  border-width: 1.5px;
+}
+.cta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cta-row .btn-primary {
+  flex: 1;
+  background: linear-gradient(90deg, var(--teal-dark), var(--teal));
+  color: #fff;
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(14,124,123,.25);
+}
+.cta-row .btn-primary:hover {
+  background: linear-gradient(90deg, #0a4e4d, #0d6e6d);
+}
+.cta-row .btn-ghost {
+  border: 1px dashed var(--line);
+  color: var(--sub);
+  background: #fff;
+  font-size: 12.5px;
+}
+.cta-row .btn-ghost:hover { background: #f3f4f6; }
+.row-between { justify-content: space-between; }
+.sel-count { font-weight: 500; color: var(--sub); font-size: 13px; }
+.sel-count-inline {
+  display: inline-block; margin-left: 8px;
+  font-size: 12.5px; color: var(--sub);
+}
+.sel-count-inline b { color: var(--teal-dark); font-size: 14px; font-weight: 700; }
+.sel-count b { color: var(--teal-dark); font-size: 16px; }
+.hint { font-size: 12.5px; color: var(--sub); line-height: 1.6; margin-top: 10px; }
+.quick-actions { display: flex; gap: 10px; margin-top: 12px; }
+
+/* ===== 训练项目：顶层 tab 切换 ===== */
+.cat-tabs-wrap {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 12px;
+}
+.cat-tabs {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  background: #f1f5f7; padding: 4px; border-radius: 12px;
+  border: 1px solid var(--line);
+}
+.cat-tab {
+  border: 0; background: transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  padding: 8px 4px; border-radius: 9px;
+  cursor: pointer; transition: all .15s;
+  font-family: inherit; color: var(--sub);
+  min-width: 0;
+}
+.cat-tab:hover { background: rgba(255,255,255,.65); color: #243b53; }
+.cat-tab.is-active {
+  background: #fff; color: var(--teal-dark);
+  box-shadow: 0 2px 6px rgba(14,124,123,.10);
+}
+.cat-tab-icon { font-size: 17px; line-height: 1; }
+.cat-tab-label { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.cat-tab-count {
+  font-size: 10px; color: var(--sub);
+  font-weight: 600; background: rgba(14,124,123,.10);
+  padding: 1px 6px; border-radius: 20px;
+  white-space: nowrap;
+}
+.cat-clear { align-self: flex-end; }
+.cat-panes { margin-top: 12px; }
+.cat-pane { display: none; }
+.cat-pane.is-active { display: block; }
+
+/* tab 内部小节（一次全部展开，不再折叠） */
+.cat-section {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.cat-section:first-child { margin-top: 0; }
+.cat-section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, rgba(14,124,123,.06), transparent 70%);
+  border-bottom: 1px solid var(--line);
+}
+.cat-section-title {
+  font-size: 14px; font-weight: 700; color: var(--teal-dark);
+  letter-spacing: 0.5px;
+}
+.cat-section-tools { display: flex; align-items: center; gap: 6px; flex: none; }
+.cat-section .cat-section-head + .exercise-item { margin-top: 0; }
+.cat-section .exercise-item {
+  margin: 0;
+  border-radius: 0;
+  border-left: 0; border-right: 0; border-top: 0;
+}
+.cat-section .exercise-item:first-child { border-top: 0; }
+
+/* tab 容器下，每个小节里第一个 exercise-item 顶部无圆角 */
+.cat-section .exercise-item:first-of-type { border-top: 0; }
+
+/* 年龄段切换 — 整行堆叠，左对齐 */
+.seg-group { display: flex; flex-direction: column; gap: 8px; }
+.seg {
+  position: relative; cursor: pointer; user-select: none;
+  border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 10px 14px; text-align: left;
+  transition: all .15s; background: #fbfcfe;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+}
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg b { display: block; font-size: 14.5px; color: #374151; text-align: left; }
+.seg span { display: block; font-size: 11.5px; color: var(--sub); margin-top: 1px; text-align: left; }
+.seg:hover { border-color: #b5d8d5; }
+.seg.is-active {
+  background: var(--teal-light);
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(14, 124, 123, .12);
+}
+.seg.is-active b { color: var(--teal-dark); }
+
+/* 表单 */
+.form-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field > span { font-size: 12px; color: #4b5563; font-weight: 600; }
+.span-2 { grid-column: span 2; }
+.span-3 { grid-column: span 3; }
+.field input, .quick input, .hr-row input {
+  border: 1px solid var(--line); border-radius: 9px;
+  padding: 8px 10px; font-size: 14px; outline: none;
+  background: #fff; transition: border .15s, box-shadow .15s; color: var(--ink);
+  width: 100%;
+}
+.field input:focus, .quick input:focus, .hr-row input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(14,124,123,.12);
+}
+
+/* 签名上传控件 */
+.sig-upload {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: #4b5563;
+  min-height: 36px;
+}
+.btn-link {
+  background: transparent; border: 1px dashed var(--teal); color: var(--teal-dark);
+  padding: 5px 11px; border-radius: 8px; font-size: 12.5px; cursor: pointer;
+  font-weight: 600;
+}
+.btn-link:hover { background: rgba(14,124,123,.06); }
+.btn-link.danger {
+  border-color: #fecaca; color: #b91c1c;
+}
+.btn-link.danger:hover { background: #fef2f2; }
+.sig-status { font-size: 11.5px; color: var(--sub); }
+.sig-status:empty { display: none; }
+
+/* 项目列表 */
+.exercise-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  background: #fff;
+  transition: border .15s, background .15s;
+}
+.exercise-item.selected {
+  border-color: #9fd4d1;
+  background: #f7fcfb;
+}
+.ex-row { display: flex; align-items: flex-start; gap: 9px; }
+.ex-check {
+  width: 19px; height: 19px; margin-top: 2px; accent-color: var(--teal);
+  cursor: pointer; flex: none;
+}
+.ex-main { flex: 1; min-width: 0; }
+.ex-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; cursor: pointer;
+}
+.ex-name { font-size: 14.5px; font-weight: 700; color: #243b53; }
+.ex-badge { font-size: 11px; color: var(--sub); font-weight: 600; flex: none; }
+.ex-tip {
+  font-size: 12px; color: var(--sub); line-height: 1.55;
+  margin-top: 4px;
+}
+.param-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 9px; }
+.param-row.hidden, .hr-row.hidden { display: none; }
+.param-row label { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: #4b5563; }
+.param-row input { width: 58px; }
+.param-sym { color: #9ca3af; font-weight: 600; }
+.hr-row {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px;
+  font-size: 12px; color: #6b7280;
+}
+.hr-row input { width: 90px; padding: 4px 8px; }
+.warn-tag {
+  font-size: 11px; color: #b45309; background: #fef3e2;
+  border: 1px solid #f3d9a8; padding: 2px 8px; border-radius: 20px;
+  flex: none; font-weight: 600;
+}
+.warn-tag strong { color: #92400e; }
+
+.cat-block {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color .15s;
+}
+.cat-block.is-open { border-color: #9fd4d1; background: #f7fcfb; }
+.cat-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer; user-select: none;
+  background: #fff;
+  transition: background .15s;
+}
+.cat-block.is-open .cat-head { background: transparent; }
+.cat-head:hover { background: #f4f9f9; }
+.cat-block.is-open .cat-head:hover { background: #f0f9f8; }
+
+.cat-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.cat-arrow {
+  width: 18px; height: 18px;
+  border: 1.5px solid #d1d5db; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #6b7280; font-size: 10px; font-weight: 700;
+  transition: transform .2s, border-color .15s, color .15s, background .15s;
+  flex: none;
+}
+.cat-block.is-open .cat-arrow {
+  background: var(--teal); color: #fff; border-color: var(--teal);
+  transform: rotate(180deg);
+}
+.cat-name { font-size: 14px; font-weight: 700; color: #243b53; }
+.cat-name .cat-count {
+  display: inline-block; margin-left: 6px;
+  font-size: 11.5px; color: var(--sub); font-weight: 600;
+}
+.cat-block.is-open .cat-name { color: var(--teal-dark); }
+.cat-block.is-open .cat-name .cat-count { color: var(--teal-dark); }
+
+/* 折叠时：类目头部右侧显示"未选/已选 N"标签，cat-body 隐藏 */
+.cat-body { padding: 4px 12px 10px; }
+.cat-block:not(.is-open) .cat-body { display: none; }
+
+.cat-tools { display: flex; align-items: center; gap: 6px; flex: none; }
+.cat-select {
+  border: 0; background: transparent; color: #2563eb; font-size: 12.5px;
+  cursor: pointer; padding: 2px 4px; border-radius: 6px; font-weight: 600;
+}
+.cat-select:hover { background: #eff6ff; text-decoration: underline; }
+.cat-add {
+  border: 1px dashed #9fd4d1; color: var(--teal-dark); background: var(--teal-light);
+  font-size: 12.5px; font-weight: 700; cursor: pointer;
+  padding: 3px 10px; border-radius: 20px; transition: all .15s;
+}
+.cat-add:hover { background: #d7eeec; border-style: solid; }
+.cat-empty { padding: 2px 2px 8px; }
+.cat-empty-tip { font-size: 11.5px; color: #9aa4b2; padding: 8px 2px; line-height: 1.5; }
+
+/* 条目操作按钮 */
+.ex-tools { display: flex; align-items: center; gap: 6px; flex: none; }
+.mini-btn {
+  border: 1px solid var(--line); background: #fff; color: #4b5563;
+  font-size: 11.5px; line-height: 1; padding: 4px 8px; border-radius: 6px;
+  cursor: pointer; font-weight: 600; transition: all .12s;
+}
+.mini-btn:hover { border-color: var(--teal); color: var(--teal-dark); background: var(--teal-light); }
+.mini-btn.danger:hover { border-color: #fecaca; color: #b91c1c; background: #fef2f2; }
+
+/* ===== 动作编辑弹窗 ===== */
+.modal-mask {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(15, 23, 42, .45);
+  display: none; align-items: flex-start; justify-content: center;
+  padding: 4vh 16px; overflow: auto;
+}
+.modal-mask.open { display: flex; }
+.modal {
+  background: #fff; border-radius: 16px; box-shadow: 0 24px 60px rgba(15, 23, 42, .28);
+  width: 100%; max-width: 620px; padding: 18px 20px 20px;
+  animation: md-in .16s ease-out;
+}
+@keyframes md-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.modal-head h3 { font-size: 16px; color: #243b53; }
+.modal-close {
+  border: 0; background: #f3f4f6; color: #6b7280; font-size: 16px;
+  width: 28px; height: 28px; border-radius: 8px; cursor: pointer; line-height: 1;
+}
+.modal-close:hover { background: #fee2e2; color: #b91c1c; }
+.md-sec { border-top: 1px dashed var(--line); margin-top: 12px; padding-top: 10px; }
+.md-sec-label { font-size: 12px; color: #4b5563; font-weight: 700; margin-bottom: 8px; }
+.modal textarea {
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px;
+  font: inherit; font-size: 13px; width: 100%; resize: vertical; outline: none;
+  color: var(--ink); background: #fff;
+}
+.modal select {
+  border: 1px solid var(--line); border-radius: 9px; padding: 7px 8px;
+  font: inherit; font-size: 13.5px; outline: none; background: #fff; color: var(--ink);
+  width: 100%;
+}
+.modal textarea:focus, .modal select:focus {
+  border-color: var(--teal); box-shadow: 0 0 0 3px rgba(14, 124, 123, .12);
+}
+.apply-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
+.apply-row label {
+  display: flex; align-items: center; gap: 6px; font-size: 13px;
+  color: #374151; cursor: pointer; font-weight: 600;
+}
+.apply-row input, .check-line input { accent-color: var(--teal); width: 15px; height: 15px; }
+.check-line { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 13px; color: #374151; }
+.md-recs { border: 0; padding: 0; margin: 0; }
+.md-recs .rec-row {
+  display: grid; grid-template-columns: 110px 1fr auto 1fr auto;
+  gap: 8px; align-items: center; margin-bottom: 8px;
+}
+.md-recs .rec-row b { font-size: 13px; color: #374151; font-weight: 600; }
+.md-recs .rec-row span { color: #9ca3af; font-weight: 600; }
+.md-recs input[type=number] {
+  border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px;
+  width: 100%; font: inherit; font-size: 13.5px; outline: none;
+}
+.md-recs input[type=number]:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(14,124,123,.12); }
+.md-tip { font-size: 11.5px; color: #9aa4b2; margin-top: 4px; line-height: 1.5; }
+.modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+.modal-actions .right { display: flex; gap: 10px; }
+.btn-danger {
+  background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; font-size: 13.5px;
+}
+.btn-danger:hover { background: #fee2e2; }
+
+/* 年龄下方 HR 推荐提示 */
+.hr-hint {
+  font-size: 12px; color: #0a5c5b; background: #e6f4f3;
+  border: 1px solid #bfe3e1; border-radius: 8px;
+  padding: 6px 10px; margin-top: 6px;
+}
+.hr-hint b { color: var(--red); }
+
+/* 心率输入框聚焦时变红边 */
+.ip-hr:focus { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(192,57,43,.10) !important; }
+.modal .btn-primary {
+  background: linear-gradient(90deg, var(--teal-dark), #129a86); color: #fff;
+}
+.modal .btn-primary:hover { background: linear-gradient(90deg, #0a4e4d, #0e7c7b); }
+.modal .btn-soft { font-size: 13.5px; }
+
+.foot-note { font-size: 12px; color: #9aa4b2; text-align: center; padding: 2px 0 14px; line-height: 1.6; }
+
+/* ===== 右侧预览 ===== */
+.preview { min-width: 0; }
+.preview-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 10px 12px 10px 12px;
+  background: linear-gradient(135deg, #f0faf9 0%, #ffffff 60%);
+  border: 1px solid var(--teal-light); border-radius: 12px;
+  margin-bottom: 14px;
+}
+.pv-meta { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pv-icon {
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--teal); color: #fff;
+  border-radius: 10px; flex: none;
+  box-shadow: 0 2px 8px rgba(14,124,123,.3);
+}
+.pv-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pv-line { display: flex; align-items: baseline; gap: 10px; }
+.pv-title { font-weight: 700; font-size: 14.5px; color: #243b53; }
+.pv-pages {
+  font-size: 12px; font-weight: 600; color: var(--teal-dark);
+  background: rgba(14,124,123,.10); border: 1px solid rgba(14,124,123,.25);
+  padding: 2px 8px; border-radius: 12px;
+}
+.pv-pages b { color: var(--red); font-weight: 800; }
+.pv-sub { font-size: 11.5px; color: var(--sub); }
+.pv-actions { display: flex; gap: 8px; flex: none; }
+.preview-host { overflow: auto; padding-bottom: 30px; }
+.preview-host.zoomed { display: flex; justify-content: center; }
+
+/* ===== A4 纸张（屏幕展示 & 打印共用一个元素） ===== */
+.sheet {
+  width: 210mm;
+  /* 取消强制 min-height，让内容自然增高，超出一页时打印自动分页 */
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(30, 41, 59, .18);
+  border-radius: 3px;
+  padding: 12mm 16mm 12mm;
+  color: #111827;
+  position: relative;
+  font-size: 12pt;
+  line-height: 1.7;
+  transform-origin: top center;
+}
+.sheet .stamp { position: absolute; }
+
+/* 屏幕展示时给 sheet 一个最小高度，保持 A4 视觉；打印模式时由 CSS 重置 */
+.sheet:not(.print-sheet) { min-height: 297mm; }
+
+/* ---- 处方头 ---- */
+.rx-head { position: relative; padding-bottom: 1mm; }
+.rx-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 9.5pt; color: #374151;
+}
+.rx-seg-tag {
+  border: 1px solid var(--teal); color: var(--teal-dark);
+  padding: 1px 9px; border-radius: 20px; font-weight: 700; font-size: 10pt;
+}
+.rx-no { font-weight: 800; color: var(--red); font-size: 13pt; letter-spacing: 1px; }
+.rx-title {
+  text-align: center; font-size: 20pt; font-weight: 800; letter-spacing: 4px;
+  margin-top: 3mm; color: #111;
+}
+.rx-en {
+  text-align: center; font-size: 9pt; letter-spacing: 2px; color: #4b5563;
+  margin-top: 1mm; font-weight: 600;
+}
+.rx-divider {
+  border: none; border-top: 1.6px solid #111827; margin: 2mm 0 0;
+}
+.rx-divider.sub {
+  border-top: 1px solid #d1d5db; margin-top: 1mm;
+}
+
+/* ---- 患者信息 ---- */
+.rx-patient {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 6mm;
+  margin-top: 2.5mm;
+  padding: 2mm 3mm;
+  background: linear-gradient(90deg, rgba(14,124,123,.05), rgba(14,124,123,.01) 70%);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 4px 4px 0;
+  font-size: 12pt;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.rx-patient .k { color: #374151; }
+.rx-blank { display: inline-block; min-width: 14mm; border-bottom: 1px solid #6b7280; color: #111; font-weight: 600; }
+.rx-blank.sm { min-width: 7mm; }
+.p-row { margin-bottom: 0; flex-shrink: 0; }
+.p-row .val { font-weight: 700; }
+
+/* ---- 训练明细 ---- */
+.rx-body { margin-top: 4.5mm; }
+.rx-sec { margin-top: 2.6mm; }
+/* 单个项目不跨页，保证每一项都是完整的；整个 rx-section 允许跨页 */
+.rx-item, .rx-item-line, .rx-item-guide, .rx-empty, .rx-sec-empty {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+/* 小标题与下一项保持同页（避免孤标题） */
+.rx-sec-title { page-break-after: avoid; break-after: avoid; }
+.rx-sec-title {
+  font-size: 13pt; font-weight: 800; color: #111;
+  border-left: 4px solid var(--teal);
+  padding-left: 2.5mm; margin-bottom: 1.2mm;
+  background: linear-gradient(90deg, rgba(14,124,123,.06), transparent 60%);
+  padding-top: 1.4mm; padding-bottom: 1.4mm;
+  margin-top: 4mm;
+}
+.rx-item { padding: 2mm 0 2mm 2.5mm; border-bottom: 1px dotted #e5e7eb; }
+.rx-item:last-child { border-bottom: 0; }
+.rx-item-line {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: baseline; gap: 6mm;
+}
+.rx-item-name { font-weight: 700; font-size: 12.5pt; color: #111; line-height: 1.45; }
+.rx-item-dose {
+  white-space: nowrap; font-weight: 700; font-size: 12.5pt;
+  color: var(--teal-dark);
+  background: rgba(14,124,123,.08);
+  border: 1px solid rgba(14,124,123,.2);
+  padding: 1mm 3mm; border-radius: 2mm;
+  align-self: center;
+}
+.rx-item-dose em { font-style: normal; border-bottom: 1px solid #111827; padding: 0 2mm; }
+.rx-item-guide {
+  font-size: 11pt; color: #4b5563; margin-top: 1mm; max-width: 160mm;
+  line-height: 1.55;
+}
+/* 心率子行与要领略作区分 */
+.rx-item-guide + .rx-item-guide { color: #6b7280; font-size: 10.5pt; }
+
+/* 屏幕展示用的分页指示 */
+.page-break-marker {
+  position: absolute; left: 0; right: 0;
+  height: 0;
+  border-top: 1.2px dashed #e85a5a;
+  pointer-events: none;
+  z-index: 4;
+}
+.page-break-marker::after {
+  content: '第 ' attr(data-pn) ' 页 ↓';
+  position: absolute; right: 4mm; top: -10px;
+  background: #e85a5a; color: #fff;
+  font-size: 9pt; font-weight: 700;
+  padding: 1mm 3mm; border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+.rx-empty {
+  color: #9ca3af; font-size: 10pt; text-align: center;
+  padding: 12mm 0; border: 1px dashed #d1d5db; border-radius: 2mm;
+}
+.rx-sec-empty { color: #9ca3af; font-size: 9.5pt; padding: 1mm 0 1mm 2.5mm; font-style: italic; }
+
+/* ---- 签名区 ---- */
+.rx-sign {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10mm;
+  margin-top: 10mm;
+}
+.rx-sign .sig-block { font-size: 12pt; }
+.rx-sign .sig-label { margin-bottom: 7mm; color: #374151; }
+.rx-sign .sig-line { border-bottom: 1.1px solid #111827; min-height: 7mm; }
+.rx-sign .sig-line .val { font-weight: 700; }
+/* 签名图片：有图时去掉下划线，按图片高度展示 */
+.rx-sign .sig-image-host { padding: 1mm 0; border-bottom: 0; min-height: 14mm; display: flex; align-items: center; justify-content: flex-start; }
+.rx-sign .sig-image-host:empty::before {
+  content: '';
+  display: block; width: 60mm; border-bottom: 1.1px solid #111827;
+}
+.rx-sign .sig-image {
+  display: block; max-width: 60mm; max-height: 16mm; object-fit: contain;
+}
+
+/* ---- 印章 ---- */
+.rx-stamp {
+  position: absolute; right: 16mm; bottom: 16mm;
+  width: 24mm; height: 24mm;
+  border: 1.6px solid var(--red); color: var(--red);
+  border-radius: 3mm;
+  display: flex; align-items: center; justify-content: center;
+  transform: rotate(-14deg);
+  opacity: .9;
+  font-weight: 800; font-size: 12pt; letter-spacing: 2px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ---- 页脚 ---- */
+.rx-foot {
+  margin-top: 7mm;
+  border-top: 1px solid #d1d5db;
+  padding-top: 2.5mm;
+  font-size: 9pt; color: #6b7280; line-height: 1.6;
+}
+.rx-foot b { color: #374151; }
+.rx-foot-notice {
+  margin-top: 1mm;
+  font-size: 10pt;
+  font-weight: 400;
+  color: #6b7280;
+  line-height: 1.7;
+  text-align: justify;
+}
+
+/* ===== 顶部 Toast 提示 ===== */
+.toast {
+  position: fixed; left: 50%; bottom: 30%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(15, 23, 42, .92); color: #fff;
+  padding: 11px 22px; border-radius: 999px;
+  font-size: 14px; font-weight: 500;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .3);
+  z-index: 80; opacity: 0;
+  transition: opacity .2s, transform .25s;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== 打印后确认弹窗 ===== */
+.confirm-mask {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(15, 23, 42, .55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  opacity: 0; transition: opacity .18s;
+}
+.confirm-mask.open { opacity: 1; }
+.confirm-box {
+  background: #fff; border-radius: 16px;
+  padding: 28px 24px 22px;
+  max-width: 380px; width: 100%;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .28);
+  text-align: center;
+  animation: confirm-in .22s ease-out;
+}
+@keyframes confirm-in {
+  from { transform: translateY(8px) scale(.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.confirm-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #129a86);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 800;
+  margin: 0 auto 14px;
+  box-shadow: 0 4px 16px rgba(14,124,123,.35);
+}
+.confirm-title { font-size: 17px; font-weight: 700; color: #1f2937; margin-bottom: 8px; }
+.confirm-msg { font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 20px; }
+.confirm-msg small { font-size: 12px; color: var(--teal-dark); font-weight: 600; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions .btn { flex: 1; padding: 12px; font-size: 14.5px; min-height: 44px; }
+.confirm-actions .btn-primary {
+  background: linear-gradient(90deg, var(--teal-dark), var(--teal));
+  color: #fff;
+}
+
+/* ===== 打印 ===== */
+@page { size: A4 portrait; margin: 0; }
+
+@media print {
+  html, body { background: #fff !important; width: auto; }
+  body.printing .no-print { display: none !important; }
+  body.printing .layout { display: block !important; max-width: none !important; padding: 0 !important; }
+  body.printing .preview { padding: 0 !important; margin: 0 !important; }
+  body.printing .preview-host { overflow: visible !important; padding: 0 !important; height: auto !important; }
+  body.printing .sheet {
+    box-shadow: none !important; border-radius: 0 !important;
+    margin: 0 auto !important;
+    width: 210mm !important;
+    min-height: auto !important;
+    padding: 15mm 16mm 14mm !important;
+    transform: none !important;
+  }
+  body.printing .sheet * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* 屏幕用的分页指示在打印时必须隐藏 */
+  body.printing .page-break-marker { display: none !important; }
+}
+
+/* ===== 响应式 ===== */
+
+/* 平板：双列变单列，表单缩为 2 列 */
+@media (max-width: 1240px) {
+  .layout { grid-template-columns: 1fr; gap: 18px; }
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .span-3 { grid-column: span 2; }
+}
+
+/* 小屏平板：表单继续优化，段位卡改 2 列 */
+@media (max-width: 900px) {
+  .layout { padding: 16px; }
+  .seg b { font-size: 13.5px; }
+  .seg span { font-size: 10.5px; }
+  .preview-bar { padding: 8px 10px; }
+  .pv-title { font-size: 14px; }
+}
+
+/* 手机：单列紧凑布局，预览区可折叠 */
+@media (max-width: 640px) {
+  /* 顶栏 */
+  .topbar-inner {
+    padding: 10px 14px; gap: 10px; flex-wrap: wrap;
+  }
+  .brand-mark { width: 36px; height: 36px; font-size: 13px; }
+  .brand h1 { font-size: 16px; }
+  .brand p { font-size: 10px; letter-spacing: 0; }
+  .topbar-actions { width: 100%; }
+  .topbar-actions .btn { flex: 1; padding: 11px 14px; font-size: 14px; }
+
+  /* 布局 */
+  .layout { padding: 12px; gap: 12px; }
+  .panel { gap: 12px; }
+  .card { padding: 14px 14px 12px; border-radius: 14px; }
+  .card-title { font-size: 14px; margin-bottom: 10px; }
+
+  /* 表单：全部单列 */
+  .form-grid { grid-template-columns: 1fr; gap: 10px; }
+  .span-3 { grid-column: span 1; }
+
+  /* 输入框触摸友好 */
+  .field input, .quick input, .hr-row input {
+    padding: 11px 12px; font-size: 16px; /* 16px 防止 iOS 自动放大 */
+    border-radius: 10px;
+  }
+  .field > span { font-size: 12.5px; }
+  .hr-hint { font-size: 13px; padding: 8px 12px; }
+
+  /* 段位卡：列堆叠左对齐 */
+  .seg { padding: 9px 12px; border-radius: 10px; }
+
+  /* tab 行触摸友好 */
+  .cat-tabs-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+  .cat-tabs { padding: 3px; gap: 4px; }
+  .cat-tab { padding: 10px 4px; }
+  .cat-tab-icon { font-size: 19px; }
+  .cat-tab-label { font-size: 13px; }
+  .cat-clear { width: 100%; }
+  .seg b { font-size: 12.5px; }
+  .seg span { font-size: 10px; margin-top: 1px; }
+
+  /* 步骤条：紧凑模式 */
+  .stepper { padding: 8px 10px; gap: 4px; top: 64px; }
+  .step-label { display: none; }
+  .step-line { height: 1.5px; }
+  .step-dot { width: 22px; height: 22px; font-size: 11px; }
+
+  /* 类目折叠卡：移动端更紧凑 */
+  .cat-head { padding: 10px 12px; }
+  .cat-name { font-size: 13.5px; }
+  .cat-body { padding: 4px 10px 10px; }
+  .quick-actions { gap: 6px; flex-wrap: wrap; }
+  .quick-actions .btn { padding: 6px 10px; font-size: 12px; min-height: 32px; }
+
+  /* 运动项目 */
+  .exercise-item { padding: 12px; border-radius: 12px; }
+  .ex-check {
+    width: 24px; height: 24px; margin-top: 0;
+  }
+  .ex-name { font-size: 14.5px; line-height: 1.4; }
+  .ex-tip { font-size: 12.5px; }
+  .param-row { gap: 6px; margin-top: 10px; }
+  .param-row label { font-size: 12.5px; padding: 4px 0; }
+  .param-row input { width: 64px; padding: 8px 10px; font-size: 15px; }
+  .hr-row input { width: 100px; padding: 8px 10px; font-size: 15px; }
+  .mini-btn { padding: 6px 12px; font-size: 13px; min-height: 32px; }
+
+  .cat-name { font-size: 13px; }
+  .cat-select, .cat-add { font-size: 12.5px; padding: 5px 10px; min-height: 32px; }
+
+  /* 签名上传 */
+  .sig-upload { flex-wrap: wrap; gap: 6px; }
+  .btn-link { padding: 8px 12px; font-size: 13.5px; min-height: 36px; }
+
+  /* 预览区：默认隐藏，提供浮动按钮唤起 */
+  .preview { display: none; }
+
+  /* 弹窗：全屏 */
+  .modal-mask { padding: 0; }
+  .modal {
+    max-width: 100%; min-height: 100vh; border-radius: 0;
+    padding: 16px 16px 20px;
+    display: flex; flex-direction: column;
+  }
+  .modal-body { flex: 1; overflow: auto; }
+  .modal-actions { position: sticky; bottom: 0; background: #fff;
+    padding-top: 12px; margin-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .modal-actions .btn { flex: 1; padding: 12px; font-size: 15px; min-height: 44px; }
+  .md-recs .rec-row { grid-template-columns: 90px 1fr auto 1fr auto; gap: 6px; }
+  .md-recs .rec-row b { font-size: 12.5px; }
+  .md-recs input[type=number] { padding: 9px 10px; font-size: 14px; }
+  .modal select { padding: 10px 10px; font-size: 15px; }
+  .modal textarea { padding: 10px; font-size: 14px; }
+  .apply-row label { font-size: 14px; padding: 6px 0; }
+  .apply-row input, .check-line input { width: 18px; height: 18px; }
+
+  /* 浮动"查看预览"按钮 */
+  .pv-fab {
+    display: flex !important;
+    position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 30;
+    background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+    color: #fff; border: 0; border-radius: 999px;
+    padding: 14px 20px; font-size: 15px; font-weight: 700;
+    box-shadow: 0 8px 24px rgba(14,124,123,.4);
+    cursor: pointer; align-items: center; gap: 8px;
+    min-height: 52px;
+  }
+  .pv-fab:active { transform: scale(0.96); }
+
+  /* 全屏预览弹层 */
+  .pv-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(15, 23, 42, .55);
+    flex-direction: column;
+  }
+  .pv-overlay.open { display: flex; }
+  .pv-overlay-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; background: #fff; border-bottom: 1px solid var(--line);
+    flex: none;
+  }
+  .pv-overlay-head .pv-title { font-size: 15px; }
+  .pv-overlay-head .pv-close {
+    background: #f3f4f6; color: #374151; border: 0;
+    width: 36px; height: 36px; border-radius: 10px; font-size: 18px;
+    cursor: pointer;
+  }
+  .pv-overlay-head .pv-close:active { background: #e5e7eb; }
+  .pv-overlay-body {
+    flex: 1; overflow: auto; padding: 14px;
+    display: flex; align-items: flex-start; justify-content: center;
+    background: #eef1f6;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pv-overlay-body .sheet {
+    margin: 0; box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  }
+}
+
+/* 超小屏（如 iPhone SE） */
+@media (max-width: 380px) {
+  .topbar-inner { padding: 8px 10px; }
+  .brand h1 { font-size: 14px; }
+  .brand p { display: none; }
+  .layout { padding: 8px; }
+  .card { padding: 12px 10px; }
+  .seg b { font-size: 11.5px; }
+  .ex-name { font-size: 13.5px; }
+  .pv-fab { padding: 12px 16px; font-size: 14px; }
+}
+
+/* 默认隐藏 FAB（仅手机显示） */
+.pv-fab { display: none; }
+
+/* ===== 打印（精细控制） ===== */
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- 顶栏（不打印） -->
+    <header class="topbar no-print">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark">OP</div>
+          <div>
+            <h1>骨质疏松运动处方</h1>
+            <p>OSTEOPOROSIS EXERCISE PRESCRIPTION · 生成与打印</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" id="btnPdf" type="button" title="浏览器打印对话框 → 另存为 PDF">打印 / 导出 PDF</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- 左侧：配置面板（不打印） -->
+      <section class="panel no-print" id="formPanel">
+        <!-- 顶部步骤指示器 -->
+        <div class="stepper" id="stepper">
+          <div class="step active" data-step="1">
+            <span class="step-dot">1</span>
+            <span class="step-label">选版本</span>
+          </div>
+          <span class="step-line"></span>
+          <div class="step" data-step="2">
+            <span class="step-dot">2</span>
+            <span class="step-label">填信息</span>
+          </div>
+          <span class="step-line"></span>
+          <div class="step" data-step="3">
+            <span class="step-dot">3</span>
+            <span class="step-label">选项目</span>
+          </div>
+          <span class="step-line"></span>
+          <div class="step" data-step="4">
+            <span class="step-dot">4</span>
+            <span class="step-label">打印</span>
+          </div>
+        </div>
+
+        <!-- 1. 年龄段 -->
+        <div class="card" id="step1Card">
+          <div class="card-title">
+            <span>① 患者年龄段与运动版本</span>
+            <span class="card-badge" id="segBadge">50–64 岁</span>
+          </div>
+          <div class="seg-group" id="segGroup">
+            <label class="seg is-active" data-seg="50">
+              <input type="radio" name="seg" value="50" checked />
+              <b>50–64 岁</b>
+              <span>标准动作版</span>
+            </label>
+            <label class="seg" data-seg="65">
+              <input type="radio" name="seg" value="65" />
+              <b>65–74 岁</b>
+              <span>简化动作版</span>
+            </label>
+            <label class="seg" data-seg="75">
+              <input type="radio" name="seg" value="75" />
+              <b>≥ 75 岁</b>
+              <span>超简化 · 坐式版</span>
+            </label>
+          </div>
+          <p class="hint" id="segHint"></p>
+        </div>
+
+        <!-- 2. 患者信息 -->
+        <div class="card" id="step2Card">
+          <div class="card-title">
+            <span>② 患者信息与训练安排</span>
+            <span class="card-badge" id="infoBadge">未填写</span>
+          </div>
+          <div class="form-grid">
+            <label class="field">
+              <span>姓名</span>
+              <input type="text" id="pName" placeholder="请输入患者姓名" />
+            </label>
+            <label class="field">
+              <span>年龄（岁）</span>
+              <input type="number" id="pAge" min="0" max="120" placeholder="年龄" />
+              <div id="hrHint" class="hr-hint" style="display:none"></div>
+            </label>
+            <label class="field">
+              <span>每周训练（次）</span>
+              <input type="number" id="pFreq" min="0" max="14" placeholder="如 3" />
+            </label>
+            <label class="field">
+              <span>每次训练（分钟）</span>
+              <input type="number" id="pMins" min="0" max="180" placeholder="如 40" />
+            </label>
+            <label class="field">
+              <span>日期</span>
+              <input type="date" id="pDate" />
+            </label>
+            <label class="field">
+              <span>签名图片</span>
+              <span class="sig-upload">
+                <input type="file" id="sigFile" accept="image/*" hidden />
+                <button type="button" class="btn-link" id="sigUploadBtn">选择图片…</button>
+                <button type="button" class="btn-link danger" id="sigClearBtn" hidden>清除</button>
+                <span class="sig-status" id="sigStatus"></span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. 训练项目（按顶层类目 tab 切换） -->
+        <div class="card" id="step3Card">
+          <div class="card-title">
+            <span>③ 训练项目（按类目选择）</span>
+            <span class="card-badge" id="selBadge">已选 0 项</span>
+          </div>
+          <p class="hint">点上方大类按钮切换，查看该类动作并勾选。已选 <b id="selCount">0</b> 项。</p>
+          <div class="cat-tabs-wrap">
+            <div class="cat-tabs" id="catTabs"><!-- 由 JS 渲染 --></div>
+            <button class="btn btn-soft btn-sm cat-clear" id="btnClear" type="button">清空选择</button>
+          </div>
+          <div class="cat-panes" id="exerciseList"></div>
+        </div>
+
+        <!-- 4. 打印操作 -->
+        <div class="card print-cta no-print" id="step4Card">
+          <div class="card-title">
+            <span>④ 预览并打印</span>
+            <span class="card-badge" id="printBadge">未打印</span>
+          </div>
+          <p class="hint">完成前三步后，在右侧（或手机上"查看预览"按钮）确认处方内容，然后打印或导出 PDF。打印完成后会自动清空表单开始下一位。</p>
+          <div class="cta-row">
+            <button class="btn btn-primary" id="btnPdf" type="button" title="浏览器打印对话框 → 另存为 PDF">打印 / 导出 PDF</button>
+            <button class="btn btn-ghost btn-sm" id="btnResetAll" type="button">手动清空（保留签名）</button>
+          </div>
+        </div>
+
+        <div class="foot-note">
+          本工具依据《骨质疏松患者运动处方》整理，仅辅助临床开具运动处方，不替代医师诊断。
+        </div>
+      </section>
+
+      <!-- 右侧：A4 预览（含打印区） -->
+      <section class="preview">
+        <div class="preview-bar no-print">
+          <div class="pv-meta">
+            <span class="pv-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm8 1.5V8h4.5L14 3.5zM7 12h10v1.2H7V12zm0 3h10v1.2H7V15zm0 3h7v1.2H7V18z"/></svg>
+            </span>
+            <div class="pv-text">
+              <div class="pv-line">
+                <span class="pv-title">A4 预览</span>
+                <span class="pv-pages">第 <b id="pageCount">1</b> 页</span>
+              </div>
+              <div class="pv-line">
+                <span class="pv-sub" id="pageMeta">单页</span>
+              </div>
+            </div>
+          </div>
+          <div class="pv-actions">
+            <button class="btn btn-ghost btn-sm" id="btnPrint2" type="button">打印 / 另存为 PDF</button>
+          </div>
+        </div>
+        <div class="preview-host">
+          <div class="sheet" id="sheet"><!-- 由 JS 渲染 --></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 动作编辑/新建弹窗（不打印） -->
+  <div class="modal-mask no-print" id="mdMask">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle">
+      <div class="modal-head">
+        <h3 id="mdTitle">编辑动作</h3>
+        <button type="button" class="modal-close" id="mdClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="md-sec">
+          <label class="field">
+            <span>动作名称（默认用于 50–64 岁）</span>
+            <input type="text" id="mdName" placeholder="如：弹力带侧平举" />
+          </label>
+          <div class="form-grid" style="margin-top:12px">
+            <label class="field">
+              <span>65–74 岁动作名（可留空）</span>
+              <input type="text" id="mdName65" placeholder="留空则沿用基础名称" />
+            </label>
+            <label class="field">
+              <span>≥ 75 岁动作名（可留空）</span>
+              <input type="text" id="mdName75" placeholder="留空则沿用基础名称" />
+            </label>
+          </div>
+        </div>
+
+        <div class="md-sec">
+          <div class="md-sec-label">要领（按年龄段分别撰写，随年龄段切换自动展示）</div>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <label class="field">
+              <span>50–64 岁要领</span>
+              <textarea id="mdG50" rows="2" placeholder="该年龄段动作要领与安全提示"></textarea>
+            </label>
+            <label class="field">
+              <span>65–74 岁要领</span>
+              <textarea id="mdG65" rows="2" placeholder="该年龄段动作要领与安全提示"></textarea>
+            </label>
+            <label class="field">
+              <span>≥ 75 岁要领</span>
+              <textarea id="mdG75" rows="2" placeholder="该年龄段动作要领与安全提示"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="md-sec">
+          <div class="md-sec-label">默认处方量（组数 × 次数，按年龄段；留空按 0 处理＝该年龄段不勾选推荐）</div>
+          <fieldset class="md-recs">
+            <div class="rec-row">
+              <b>50–64 岁</b>
+              <input type="number" id="mdS50" min="0" placeholder="组" />
+              <span>组 ×</span>
+              <input type="number" id="mdR50" min="0" placeholder="次数" />
+              <span id="mdU50" style="font-weight:600"></span>
+            </div>
+            <div class="rec-row">
+              <b>65–74 岁</b>
+              <input type="number" id="mdS65" min="0" placeholder="组" />
+              <span>组 ×</span>
+              <input type="number" id="mdR65" min="0" placeholder="次数" />
+              <span id="mdU65"></span>
+            </div>
+            <div class="rec-row">
+              <b>≥ 75 岁</b>
+              <input type="number" id="mdS75" min="0" placeholder="组" />
+              <span>组 ×</span>
+              <input type="number" id="mdR75" min="0" placeholder="次数" />
+              <span id="mdU75"></span>
+            </div>
+          </fieldset>
+          <div class="form-grid" style="margin-top:12px">
+            <label class="field">
+              <span>计量单位</span>
+              <select id="mdUnit">
+                <option value="次">次</option>
+                <option value="分钟">分钟</option>
+                <option value="秒">秒</option>
+                <option value="层">层</option>
+                <option value="阶">阶</option>
+                <option value="个">个</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>适用年龄段</span>
+              <div class="apply-row" style="margin-top:7px">
+                <label><input type="checkbox" class="md-age" value="50" /> 50–64</label>
+                <label><input type="checkbox" class="md-age" value="65" /> 65–74</label>
+                <label><input type="checkbox" class="md-age" value="75" /> ≥ 75</label>
+              </div>
+            </label>
+          </div>
+          <label class="check-line" style="margin-top:10px">
+            <input type="checkbox" id="mdHr" />
+            <span>标注目标心率（有氧类动作适用，打印时显示「心率：＿＿ 次/分」）</span>
+          </label>
+          <p class="md-tip">未勾选的年龄段，该动作将在列表中自动隐藏；已勾选项目的要领与名称随年龄段切换。</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="mdDelete" style="display:none">删除动作</button>
+        <div class="right">
+          <button type="button" class="btn btn-soft" id="mdCancel">取消</button>
+          <button type="button" class="btn btn-primary" id="mdSave">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 移动端浮动按钮：唤起全屏 A4 预览 -->
+  <button class="pv-fab no-print" id="pvFab" type="button" aria-label="查看处方预览">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M14 3h-11v18h16v-13l-5-5zm-1 5v-3.5l3.5 3.5h-3.5z"/></svg>
+    查看预览
+  </button>
+
+  <!-- 移动端全屏预览遮罩 -->
+  <div class="pv-overlay no-print" id="pvOverlay">
+    <div class="pv-overlay-head">
+      <span class="pv-title">A4 处方预览</span>
+      <button type="button" class="pv-close" id="pvClose" aria-label="关闭">×</button>
+    </div>
+    <div class="pv-overlay-body" id="pvOverlayBody"></div>
+  </div>
+
+  <script>
+/* =========================================================
+ * 骨质疏松运动处方 · 生成与打印
+ * 数据模型 / 表单联动 / A4 处方渲染 / 打印适配
+ * ========================================================= */
+
+// ---------- 年龄段与运动版本 ----------
+const SEG = {
+  50: { label: '50–64 岁', sub: '标准动作版',
+        hint: '标准动作版：动作完整、强度适中，适合骨量减少/骨质疏松且运动能力良好的患者。' },
+  65: { label: '65–74 岁', sub: '简化动作版',
+        hint: '简化动作版：降低动作幅度与强度，冲击类项目以低冲击方式替代（自动展示相应替代动作），适合活动能力有所下降者。' },
+  75: { label: '≥ 75 岁', sub: '超简化 · 坐式版',
+        hint: '超简化/坐式版：动作库自动精简——跳跃与深蹲等高风险项目不再展示，替换为坐式与低负荷动作（如坐位踏步、坐位站起、扶桌轻推撑）。' }
+}
+
+// ---------- 动作库 ----------
+// rec: 各年龄段默认组数/次数 [组, 每次量]，组数为 0 表示该年龄段不推荐勾选
+// warn: 针对特定年龄段的风险提示（显示为黄色标签）
+const CATS = [
+  {
+    title: '一、有氧运动',
+    items: [
+      {
+        key: 'walk', name: '快走 / 慢跑', unit: '分钟', hr: true,
+        guide: {
+          50: '选择平坦路面，保持中等步频，呼吸均匀，避免过快增加关节负担。',
+          65: '选择平坦路面，保持中等步频，呼吸均匀，避免过快增加关节负担。',
+          75: '以平路慢走为主，可借助手杖/助行器，呼吸均匀，循序渐进增加时长。'
+        },
+        rec: { 50: [3, 10], 65: [3, 8], 75: [2, 5] }
+      },
+      {
+        key: 'march', name: '原地踏步', unit: '分钟', hr: true,
+        guide: {
+          50: '原地交替抬膝踏步并配合摆臂，节奏平稳，可配节拍器或音乐进行。',
+          65: '原地交替抬膝踏步，抬膝幅度量力而行，手臂自然摆动，保持躯干直立。',
+          75: '坐位踏步：坐直，双脚交替抬起落下，可扶桌沿稳定，节律平稳。'
+        },
+        rec: { 50: [3, 5], 65: [3, 5], 75: [2, 5] }
+      },
+      {
+        key: 'aerobics', name: '低冲击健身操', unit: '分钟', hr: true,
+        guide: {
+          50: '选择低冲击健身操，动作连贯并配合音乐，注意落地缓冲，避免大幅跳转。',
+          65: '选择低冲击健身操（多坐式与站立平移），避免跳跃腾空，量力而行。',
+          75: '以坐位健身操为主：上肢伸展配合坐位踏步，动作舒缓，有人陪练更佳。'
+        },
+        rec: { 50: [2, 15], 65: [2, 10], 75: [1, 10] }
+      },
+      {
+        key: 'stairs', name: '爬楼梯', unit: '层', hr: true,
+        guide: {
+          50: '一步一阶，可扶扶手保持平衡，脚步踩稳后再移动。',
+          65: '全程扶扶手，一步一阶，脚步踩稳后再移动，尽量选有平台可休息的楼梯。',
+          75: '仅在有人陪同、随时可扶稳时进行，一步一阶，量力而行。'
+        },
+        rec: { 50: [2, 3], 65: [2, 2], 75: [1, 1] },
+        warn: { 75: '高龄患者应慎重，需有人陪同' }
+      },
+      {
+        key: 'swim', name: '水中行走 / 慢游', unit: '分钟', hr: true,
+        guide: {
+          50: '在齐腰至齐胸深水中行走或慢速游泳，水温适宜，注意防滑与循序渐进。',
+          65: '以水中行走为主，水深齐腰，有人在旁监护，注意地面防滑。',
+          75: '仅在有陪护的康复泳池浅水行走，专人陪同，注意保暖与防滑。'
+        },
+        rec: { 50: [2, 20], 65: [2, 15], 75: [1, 15] }
+      }
+    ]
+  },
+  {
+    title: '二、抗阻训练（康复科常见）',
+    items: [
+      {
+        key: 'squat', name: '站姿深蹲', unit: '次',
+        guide: {
+          50: '双脚与肩同宽，膝盖不超过脚尖，缓慢下蹲至大腿接近水平后停留 3 秒再起身，感受下肢发力。',
+          65: '可扶椅背下蹲，双脚与肩同宽，膝盖不超过脚尖，下蹲至约 45° 停留 3 秒后缓慢起身。',
+          75: '不建议深蹲，改由「坐位站起」等坐式训练替代。'
+        },
+        rec: { 50: [3, 10], 65: [3, 8], 75: [0, 0] },
+        warn: { 75: '高龄不推荐深蹲，用坐位站起替代' }
+      },
+      {
+        key: 'sitstand', name: '坐位站起（坐-站训练）', unit: '次',
+        guide: {
+          50: '端坐于椅前 1/3，双脚踩实，站起至完全直立位停留 3 秒，再缓慢坐下，起身时膝盖不超过脚尖。',
+          65: '端坐于较高座椅，双手可扶扶手辅助，缓慢站起并在直立位停留 3 秒后缓慢坐下。',
+          75: '功能性起立训练：从较高座椅站起，在直立位停留 3 秒再缓慢坐下，全程有人看护，循序渐进降低椅高。'
+        },
+        rec: { 50: [3, 10], 65: [3, 8], 75: [3, 6] }
+      },
+      {
+        key: 'wallsit', name: '靠墙静蹲', unit: '秒',
+        guide: {
+          50: '背靠墙、双脚与肩同宽，沿墙缓慢下蹲至膝盖约 120°，保持 3 秒以上（可随能力延长），感受大腿前侧发力。',
+          65: '背靠墙下蹲至自身舒适角度（约 135°），保持 3 秒以上，循序渐进延长时间。',
+          75: '不推荐靠墙静蹲，坐位下以抬腿等静态抗阻替代。'
+        },
+        rec: { 50: [3, 20], 65: [3, 15], 75: [0, 0] },
+        warn: { 75: '高龄不推荐，以坐位训练替代' }
+      },
+      {
+        key: 'kneeext', name: '坐位伸膝（股四头肌训练）', unit: '次',
+        guide: {
+          50: '坐位缓慢伸直一侧膝关节并勾脚尖，保持 3 秒后缓慢放下，双侧交替；可踝部加小沙袋。',
+          65: '坐位伸膝勾脚尖保持 3 秒缓慢放下，可加轻量踝部负荷，感受大腿前侧收缩。',
+          75: '坐位伸膝勾脚尖保持 3~5 秒后缓慢放下，动作轻柔，双侧交替完成。'
+        },
+        rec: { 50: [3, 10], 65: [3, 10], 75: [3, 8] }
+      },
+      {
+        key: 'bridge', name: '臀桥（桥式运动）', unit: '次',
+        guide: {
+          50: '仰卧屈膝，双脚踩实，臀部发力将骨盆抬离床面至躯干与大腿成直线，停留 3 秒后缓慢放下。',
+          65: '仰卧屈膝抬臀至自身舒适高度，停留 3 秒后缓慢放下，避免腰部过度用力代偿。',
+          75: '仰卧屈膝小幅抬臀至舒适高度停留 3 秒后放下，或坐位前倾伸髋替代，以舒适无痛为度。'
+        },
+        rec: { 50: [3, 10], 65: [3, 8], 75: [2, 6] }
+      },
+      {
+        key: 'clam', name: '蚌式开合（臀中肌训练）', unit: '次',
+        guide: {
+          50: '侧卧屈膝、脚跟并拢，上侧膝盖像贝壳一样缓慢打开至最大幅度，停留 3 秒再缓慢合拢，控制骨盆不向后倒。',
+          65: '侧卧屈膝，脚跟并拢，上侧膝盖缓慢打开至舒适幅度，停留 3 秒再合拢，幅度以臀部外侧酸胀为度。',
+          75: '侧卧小幅开合，打开后停留 3 秒再合拢，动作缓慢放松，以舒适为度。'
+        },
+        rec: { 50: [3, 12], 65: [3, 10], 75: [2, 8] }
+      },
+      {
+        key: 'calf', name: '提脚跟（小腿后侧）', unit: '次',
+        guide: {
+          50: '双脚并拢站立，缓慢踮起脚尖至最高处，停留 3 秒后放下，保持身体稳定。',
+          65: '单手扶椅保持平衡，缓慢踮起脚尖，停留 3 秒后放下。',
+          75: '改为坐位提踵：坐直、双脚着地，缓慢踮起脚跟停留 3 秒再放下，可扶桌沿。'
+        },
+        rec: { 50: [3, 12], 65: [3, 10], 75: [2, 10] }
+      },
+      {
+        key: 'bandrow', name: '弹力带划船（背部肌群）', unit: '次',
+        guide: {
+          50: '双脚踩住弹力带中部，身体微前倾，双手向后拉拽至腰部两侧，停留 3 秒后缓慢还原，感受背部收缩。',
+          65: '坐位双脚踩带，腰背挺直，缓慢向后拉拽至腰部两侧，停留 3 秒再缓慢还原，无痛为限。',
+          75: '坐位完成：坐直、双脚踩带，向后拉拽至收缩位停留 3 秒，幅度减小、缓慢均匀，无痛为限。'
+        },
+        rec: { 50: [3, 10], 65: [3, 8], 75: [2, 8] }
+      },
+      {
+        key: 'bandext', name: '弹力带肩外旋（肩袖训练）', unit: '次',
+        guide: {
+          50: '屈肘 90° 夹紧上臂，双手握弹力带向外侧拉开，停留 3 秒后缓慢还原，感受肩后侧与肩胛发力。',
+          65: '坐位屈肘夹紧上臂，弹力带向外拉开，停留 3 秒后缓慢还原，阻力以能轻松完成为宜。',
+          75: '坐位轻阻力弹力带肩外旋，向外拉开停留 3 秒，幅度减小、动作放慢，全程无痛。'
+        },
+        rec: { 50: [3, 10], 65: [3, 10], 75: [2, 8] }
+      },
+      {
+        key: 'wallpushup', name: '面墙俯卧撑（上肢推力）', unit: '次',
+        guide: {
+          50: '手掌贴墙与肩同宽，身体保持直线，缓慢屈臂贴近墙面，停留 3 秒再缓慢推回，避免腰部塌陷。',
+          65: '可改用高台/桌面推撑以减小负荷，身体保持直线，屈臂停留 3 秒再缓慢推回。',
+          75: '坐位或站立扶稳桌面，轻缓屈臂停留 3 秒再推回，保持躯干稳定。'
+        },
+        rec: { 50: [3, 8], 65: [3, 6], 75: [2, 6] }
+      }
+    ]
+  },
+  {
+    title: '三、冲击性训练',
+    items: [
+      {
+        key: 'rope', name: '跳绳', unit: '次', hr: true,
+        guide: {
+          50: '双脚轻轻跳起，绳子贴近地面即可，避免高跳导致关节震动，关节敏感者可改为无绳空跳。',
+          65: '仅限平衡良好者，建议以无绳空跳或小幅弹跳替代，落地轻缓。',
+          75: '不建议跳跃，可用坐式踏点或原地踏步替代，避免跌倒风险。'
+        },
+        rec: { 50: [2, 30], 65: [2, 20], 75: [0, 0] },
+        warn: { 65: '低冲击进行', 75: '不建议跳跃，谨慎选择' }
+      },
+      {
+        key: 'jump', name: '原地纵跳（垂直跳跃）', unit: '次',
+        guide: {
+          50: '双脚与肩同宽，轻轻纵跳后屈膝缓冲落地，感受落地冲击对下肢骨骼的刺激。',
+          65: '仅限平衡良好者，小幅纵跳并屈膝缓冲落地，单组次数适当减少。',
+          75: '不建议跳跃，可用坐式踏步或原地踏步替代。'
+        },
+        rec: { 50: [2, 10], 65: [2, 6], 75: [0, 0] },
+        warn: { 65: '低冲击进行', 75: '不建议跳跃，谨慎选择' }
+      },
+      {
+        key: 'jack', name: '开合跳', unit: '次',
+        guide: {
+          50: '双脚与肩同宽站立，开合跳跃，手臂自然平举再收回，落地轻缓无冲击。',
+          65: '改为无跳跃版本：双脚开合移动并配合手臂开合，避免腾空。',
+          75: '不建议跳跃，可改为坐位踏步摆臂。'
+        },
+        rec: { 50: [2, 20], 65: [2, 15], 75: [0, 0] },
+        warn: { 75: '不建议跳跃，谨慎选择' }
+      },
+      {
+        key: 'hurdle', name: '跳障碍', unit: '个',
+        guide: {
+          50: '用标志物（高度 5–10cm），间距 40cm，双脚并拢轻轻跳过，落地屈膝缓冲，躯干不歪斜。',
+          65: '仅限平衡良好者，可用迈步跨过替代跳跃，标志物高度不超过 5cm。',
+          75: '不建议跳跃，以跨步绕行替代，注意脚下安全。'
+        },
+        rec: { 50: [2, 10], 65: [2, 8], 75: [0, 0] },
+        warn: { 75: '不建议跳跃，谨慎选择' }
+      },
+      {
+        key: 'down', name: '下楼梯', unit: '阶',
+        guide: {
+          50: '选择平缓楼梯（阶高 15cm 左右），双脚交替下行，全掌落地缓冲，膝盖微屈不超脚尖。',
+          65: '全程扶扶手，双脚交替或双足同阶下行，全掌落地缓冲。',
+          75: '尽量选择电梯；如需下楼务必扶稳扶手、有人陪同，双足同阶缓行。'
+        },
+        rec: { 50: [2, 8], 65: [2, 6], 75: [0, 0] },
+        warn: { 75: '高龄应避免，以电梯代替' }
+      }
+    ]
+  },
+  {
+    title: '四、平衡柔韧性训练',
+    items: [
+      {
+        key: 'taichi', name: '太极拳', unit: '分钟',
+        guide: {
+          50: '选择简化 24 式中基础招式（如起势、云手），动作缓慢连贯，感受身体重心转移，幅度以不疼痛为限。',
+          65: '选择简化 24 式基础招式，动作缓慢连贯，靠近可扶持物练习更安全。',
+          75: '可坐位完成手臂云手等动作，或扶椅站立缓慢练习重心转移。'
+        },
+        rec: { 50: [1, 15], 65: [1, 10], 75: [1, 5] }
+      },
+      {
+        key: 'stance', name: '单腿站立', unit: '秒',
+        guide: {
+          50: '单脚站立，双手自然下垂，可先从扶物练习过渡到无支撑，增强平衡控制。',
+          65: '扶椅或扶墙进行单腿站立，逐渐减少支撑，注意防跌倒。',
+          75: '坐位抬腿或扶物站立练习，重在安全与重心控制。'
+        },
+        rec: { 50: [2, 15], 65: [2, 10], 75: [2, 5] }
+      },
+      {
+        key: 'linewalk', name: '一字步直线行走（动态平衡）', unit: '分钟',
+        guide: {
+          50: '脚跟接脚尖沿直线缓慢行走，目视前方，可在墙侧或扶物旁进行。',
+          65: '扶墙或扶杖做一字步行走，节奏放缓，每一步踩稳后再迈下一步。',
+          75: '高龄以站立重心转移练习替代（双脚不离地缓慢前倾-还原），有人看护。'
+        },
+        rec: { 50: [1, 5], 65: [1, 3], 75: [0, 0] },
+        warn: { 75: '高龄不推荐，可做扶物重心转移' }
+      },
+      {
+        key: 'sitstretch', name: '坐位体前屈（大腿后侧拉伸）', unit: '次',
+        guide: {
+          50: '坐位双腿伸直，缓慢前俯用手触碰脚尖，保持 15~20 秒，感受大腿后侧牵伸。',
+          65: '坐位微屈膝缓慢前俯至舒适牵伸位，保持 15 秒，避免弓背用力。',
+          75: '坐位轻柔前俯或抱膝牵伸，幅度小、无痛、可扶膝进行。'
+        },
+        rec: { 50: [3, 5], 65: [3, 4], 75: [2, 4] }
+      },
+      {
+        key: 'calfstretch', name: '扶椅小腿后侧拉伸', unit: '次',
+        guide: {
+          50: '弓步站位，后腿伸直脚跟踩实，身体前移感受小腿后侧牵伸，保持 15~20 秒后换边。',
+          65: '扶椅做小腿后侧牵伸，保持 15 秒，身体稳定不摇晃。',
+          75: '坐位用毛巾勾住脚背向上牵拉小腿，动作轻柔缓慢。'
+        },
+        rec: { 50: [3, 5], 65: [3, 4], 75: [2, 4] }
+      }
+    ]
+  }
+]
+
+// 全部条目扁平化，便于查找
+const EX_MAP = {}
+CATS.forEach(cat => cat.items.forEach(it => { EX_MAP[it.key] = it }))
+const TOTAL = Object.keys(EX_MAP).length
+
+// ---------- 年龄段差异化显示 ----------
+// hide: 该动作不出现在这些年龄段（列表与“一键推荐”中自动隐藏）
+// nameSeg: 不同年龄段下动作名称的差异化（更直观体现处方内容不同）
+const EXT = {
+  hide: {
+    squat: [75], wallsit: [75], linewalk: [75],
+    rope: [75], jump: [75], jack: [75], hurdle: [75], down: [75]
+  },
+  nameSeg: {
+    walk:        { 75: '慢走（平路，可持杖）' },
+    march:       { 75: '坐位踏步' },
+    aerobics:    { 75: '坐位健身操' },
+    calf:        { 75: '坐位提踵' },
+    wallpushup:  { 65: '高台俯卧撑', 75: '扶桌轻推撑' },
+    rope:        { 65: '无绳弹跳（跳绳替代）' },
+    jump:        { 65: '小幅纵跳' },
+    jack:        { 65: '开合移步（无跳）' },
+    taichi:      { 75: '坐位太极云手' }
+  }
+}
+function itemVisible(it, seg) {
+  return !(EXT.hide[it.key] || []).includes(Number(seg))
+}
+function itemName(it, seg) {
+  const segName = (EXT.nameSeg[it.key] || {})[Number(seg)]
+  return segName || it.name
+}
+
+// 重建扁平索引（新增/删除动作后同步）
+function rebuildExMap() {
+  Object.keys(EX_MAP).forEach(k => delete EX_MAP[k])
+  CATS.forEach(cat => cat.items.forEach(it => { EX_MAP[it.key] = it }))
+}
+// 记录动作在指定年龄段的显示名（空白则回退到基础名）
+function setAgeName(key, seg, name) {
+  if (!EXT.nameSeg[key]) EXT.nameSeg[key] = {}
+  if (name && name.trim()) EXT.nameSeg[key][Number(seg)] = name.trim()
+  else delete EXT.nameSeg[key][Number(seg)]
+  if (!Object.keys(EXT.nameSeg[key]).length) delete EXT.nameSeg[key]
+}
+// 重建列表并尽量保留当前勾选与参数
+function rebuildAndKeep() {
+  const sel = readCurrentSelections()
+  buildExerciseList()
+  writeSelections(sel)
+}
+
+// 当前弹窗上下文
+const MD = { idx: null, key: null }
+
+function openEditor(catIdx, key) {
+  MD.idx = catIdx
+  MD.key = key || null
+  const cat = CATS[catIdx]
+  const it = key ? cat.items.find(x => x.key === key) || null : null
+
+  $('#mdTitle').textContent = it ? '编辑动作' : `新建动作 · ${cat.title}`
+  $('#mdName').value = it ? it.name : ''
+  $('#mdName65').value = it ? ((EXT.nameSeg[it.key] || {})[65] || '') : ''
+  $('#mdName75').value = it ? ((EXT.nameSeg[it.key] || {})[75] || '') : ''
+  $('#mdUnit').value = it ? it.unit : '次'
+  syncUnitLabel()
+  $('#mdHr').checked = it ? !!it.hr : false
+  $('#mdG50').value = it ? (it.guide[50] || '') : ''
+  $('#mdG65').value = it ? (it.guide[65] || '') : ''
+  $('#mdG75').value = it ? (it.guide[75] || '') : ''
+
+  const setRec = (id, v) => { $('#md' + id).value = v || '' }
+  if (it && it.rec) {
+    ;['50', '65', '75'].forEach(s => {
+      setRec('S' + s, (it.rec[s] || [0, 0])[0])
+      setRec('R' + s, (it.rec[s] || [0, 0])[1])
+    })
+  } else {
+    ;['50', '65', '75'].forEach(s => { setRec('S' + s, ''); setRec('R' + s, '') })
+  }
+
+  const hideList = it ? (EXT.hide[it.key] || []) : []
+  document.querySelectorAll('.md-age').forEach(cb => {
+    cb.checked = !hideList.includes(Number(cb.value))
+  })
+
+  // 删除按钮：仅当编辑现有动作（it 存在）时显示；新建时隐藏
+  const mdDel = $('#mdDelete')
+  if (mdDel) mdDel.style.display = it ? '' : 'none'
+
+  $('#mdMask').classList.add('open')
+}
+function closeEditor() {
+  $('#mdMask').classList.remove('open')
+  MD.idx = null
+  MD.key = null
+}
+
+// 删除当前编辑的动作：清理 cat.items、EXT.hide、EXT.nameSeg，
+// 然后重建列表（已在选中的被一同移除）
+function deleteCurrentItem() {
+  if (MD.idx == null || !MD.key) {
+    closeEditor()
+    return
+  }
+  const itName = (EX_MAP[MD.key] && EX_MAP[MD.key].name) || '该动作'
+  if (!confirm(`确认删除动作「${itName}」？此操作不可撤销。`)) return
+  const cat = CATS[MD.idx]
+  if (!cat) { closeEditor(); return }
+  cat.items = cat.items.filter(x => x.key !== MD.key)
+  delete EXT.hide[MD.key]
+  delete EXT.nameSeg[MD.key]
+  rebuildExMap()
+  rebuildAndKeep()
+  saveToStorage()
+  closeEditor()
+}
+function syncUnitLabel() {
+  const u = $('#mdUnit').value
+  ;['50', '65', '75'].forEach(s => { $('#mdU' + s).textContent = u })
+}
+
+function numOr0(id) {
+  const v = parseInt($(id).value, 10)
+  return Number.isFinite(v) && v > 0 ? v : 0
+}
+function saveItem() {
+  const name = $('#mdName').value.trim()
+  if (!name) { alert('请填写动作名称'); return }
+  const ageVals = Array.from(document.querySelectorAll('.md-age:checked')).map(i => Number(i.value))
+  if (!ageVals.length) { alert('请至少勾选一个适用年龄段'); return }
+  const cat = CATS[MD.idx]
+  if (!cat) { closeEditor(); return }
+  const key = MD.key
+  let it = key ? cat.items.find(x => x.key === key) : null
+  if (!it) {
+    // 新建
+    it = {
+      key: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      name, unit: $('#mdUnit').value, hr: $('#mdHr').checked,
+      guide: {}, rec: {}
+    }
+    cat.items.push(it)
+  } else {
+    // 编辑：原有心率/单位等字段同步覆盖
+  }
+  it.name = name
+  it.unit = $('#mdUnit').value
+  it.hr = $('#mdHr').checked
+  it.guide = { 50: $('#mdG50').value.trim(), 65: $('#mdG65').value.trim(), 75: $('#mdG75').value.trim() }
+  it.rec = {
+    50: [numOr0('#mdS50'), numOr0('#mdR50')],
+    65: [numOr0('#mdS65'), numOr0('#mdR65')],
+    75: [numOr0('#mdS75'), numOr0('#mdR75')]
+  }
+  setAgeName(it.key, 65, $('#mdName65').value)
+  setAgeName(it.key, 75, $('#mdName75').value)
+  EXT.hide[it.key] = [50, 65, 75].filter(v => !ageVals.includes(v))
+  if (!EXT.hide[it.key].length) delete EXT.hide[it.key]
+  rebuildExMap()
+  rebuildAndKeep()
+  closeEditor()
+}
+
+// 列表点击委托：新建 / 编辑
+function handleListClick(e) {
+  const t = e.target.closest('[data-act]')
+  if (!t) return
+  const idx = Number(t.dataset.idx)
+  const key = t.dataset.key
+  if (t.dataset.act === 'new') openEditor(idx, null)
+  else if (t.dataset.act === 'edit') openEditor(idx, key)
+}
+
+// 读取当前已选项目（含参数），用于切换年龄段后恢复
+function readCurrentSelections() {
+  const s = {}
+  $$('.exercise-item').forEach(item => {
+    const k = item.dataset.key
+    const hr = item.querySelector('.ip-hr')
+    s[k] = {
+      checked: item.querySelector('.ex-check').checked,
+      sets: item.querySelector('.ip-sets').value,
+      reps: item.querySelector('.ip-reps').value,
+      hr: hr ? hr.value : ''
+    }
+  })
+  return s
+}
+function writeSelections(s) {
+  $$('.exercise-item').forEach(item => {
+    const st = s[item.dataset.key]
+    if (!st) return
+    item.querySelector('.ex-check').checked = st.checked
+    item.querySelector('.ip-sets').value = st.sets
+    item.querySelector('.ip-reps').value = st.reps
+    const hr = item.querySelector('.ip-hr')
+    if (hr) hr.value = st.hr || ''
+    applyItemState(item.querySelector('.ex-check'), false)
+  })
+  updateCountAndCats()
+  renderSheet()
+  fitSheet()
+}
+
+// 切换年龄段：重建列表（不同年龄段动作可见范围不同），
+// 原勾选但新年龄段不推荐的项目需确认后移除
+function switchSeg(newVal) {
+  newVal = String(newVal)
+  const oldVal = getSeg()
+  if (oldVal === newVal) return
+  const sel = readCurrentSelections()
+  const hiding = Object.keys(sel).filter(k =>
+    sel[k].checked && !itemVisible(EX_MAP[k], newVal))
+  if (hiding.length) {
+    const names = hiding.map(k => itemName(EX_MAP[k], oldVal)).join('、')
+    const ok = confirm(`切换至「${SEG[newVal].label} · ${SEG[newVal].sub}」后，以下项目不在该年龄段的推荐动作中，将从选择中移除：\n\n${names}\n\n确定切换吗？`)
+    if (!ok) {
+      // 取消则不切换（浏览器点击 label 会自动选中新 radio，需回退）
+      document.querySelector(`input[name="seg"][value="${oldVal}"]`).checked = true
+      refreshSegVisual()
+      return
+    }
+  }
+  hiding.forEach(k => delete sel[k])
+  document.querySelector(`input[name="seg"][value="${newVal}"]`).checked = true
+  buildExerciseList()
+  writeSelections(sel)
+  saveToStorage()
+}
+
+// ---------- DOM 快捷函数 ----------
+const $ = sel => document.querySelector(sel)
+const $$ = sel => Array.from(document.querySelectorAll(sel))
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+function getSeg() {
+  const el = document.querySelector('input[name="seg"]:checked')
+  return el ? el.value : '50'
+}
+
+// ---------- 心率自动建议（Tanaka 公式） ----------
+// HRmax = 208 - 0.7 × 年龄；中低强度区间为 50–70% HRmax
+function targetHrByAge(age) {
+  const n = Number(age)
+  if (!Number.isFinite(n) || n <= 0 || n > 120) return null
+  const max = Math.round(208 - 0.7 * n)
+  return { max, low: Math.round(max * 0.5), high: Math.round(max * 0.7) }
+}
+
+// ---------- localStorage 持久化 ----------
+const LS_KEY = 'rx_state_v1'
+// 运行时状态（不会序列化进 LS 全部字段）
+const STATE = { sigImg: '' }
+function saveToStorage() {
+  try {
+    const seg = getSeg()
+    const sel = {}
+    $$('.ex-check').forEach(cb => {
+      const item = cb.closest('.exercise-item')
+      if (!item) return
+      const k = item.dataset.key
+      const sets = item.querySelector('.ip-sets') || {}
+      const reps = item.querySelector('.ip-reps') || {}
+      const hr = item.querySelector('.ip-hr') || {}
+      sel[k] = {
+        checked: cb.checked,
+        sets: sets.value || '',
+        reps: reps.value || '',
+        hr: hr.value || ''
+      }
+    })
+    const data = {
+      name: $('#pName').value,
+      age: $('#pAge').value,
+      freq: $('#pFreq').value,
+      mins: $('#pMins').value,
+      date: $('#pDate').value,
+      seg,
+      sel,
+      sigImg: STATE.sigImg || ''
+    }
+    localStorage.setItem(LS_KEY, JSON.stringify(data))
+  } catch (e) { /* localStorage 不可用时静默忽略 */ }
+}
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY)
+    if (!raw) return
+    const d = JSON.parse(raw)
+    if (d.name != null) $('#pName').value = d.name
+    if (d.age != null) $('#pAge').value = d.age
+    if (d.freq != null) $('#pFreq').value = d.freq
+    if (d.mins != null) $('#pMins').value = d.mins
+    if (d.date) $('#pDate').value = d.date
+    if (d.sigImg) { STATE.sigImg = d.sigImg; updateSigStatus() }
+    if (d.seg) {
+      const radio = document.querySelector(`input[name="seg"][value="${d.seg}"]`)
+      if (radio) radio.checked = true
+    }
+    // 选中状态在 buildExerciseList 之后由 writeSelections 应用
+    window.__pendingSel = d.sel || {}
+  } catch (e) { /* localStorage 不可用或数据损坏时忽略 */ }
+}
+
+// ---------- 顶层 tab 分组 ----------
+// 把 4 个细分类目 → 4 个顶层 tab，一一对应，不合并
+const TABS = [
+  { key: 'aerobics',   label: '有氧',       icon: '🏃', cats: [0] },
+  { key: 'resistance', label: '抗阻',       icon: '💪', cats: [1] },
+  { key: 'impact',     label: '冲击',       icon: '🦘', cats: [2] },
+  { key: 'balance',    label: '平衡柔韧',   icon: '🧘', cats: [3] }
+]
+let ACTIVE_TAB = 'aerobics'
+
+// ---------- 渲染：左侧动作列表 ----------
+function buildExerciseList() {
+  const seg = getSeg()
+  const tabsEl = $('#catTabs')
+  const wrap = $('#exerciseList')
+
+  // --- 1. 渲染 tab 按钮（角标从 DOM 反查，避免依赖 STATE.sel） ---
+  let tabsHtml = ''
+  TABS.forEach(tab => {
+    const isOn = tab.key === ACTIVE_TAB
+    tabsHtml += `<button type="button" class="cat-tab${isOn ? ' is-active' : ''}" data-tab="${tab.key}">
+      <span class="cat-tab-icon">${tab.icon}</span>
+      <span class="cat-tab-label">${tab.label}</span>
+      <span class="cat-tab-count" data-tab-count="${tab.key}">已选 0</span>
+    </button>`
+  })
+  tabsEl.innerHTML = tabsHtml
+
+  // --- 2. 渲染每个 tab 的内容（pane），仅激活者显示 ---
+  let paneHtml = ''
+  TABS.forEach(tab => {
+    const isOn = tab.key === ACTIVE_TAB
+    paneHtml += `<div class="cat-pane${isOn ? ' is-active' : ''}" data-pane="${tab.key}">`
+    if (!tab.cats.length) {
+      paneHtml += `<p class="cat-empty-tip">该类目暂无内容。</p>`
+    } else {
+      tab.cats.forEach(ci => {
+        const cat = CATS[ci]; if (!cat) return
+        const vis = cat.items.filter(it => itemVisible(it, seg))
+        // 小节标题（不再折叠，直接展开所有项目）
+        paneHtml += `<div class="cat-section" data-idx="${ci}">
+          <div class="cat-section-head">
+            <span class="cat-section-title">${cat.title.replace(/^[一二三四五]、/, '')}</span>
+            <div class="cat-section-tools">
+              ${vis.length ? `<button type="button" class="cat-select" data-cat-key="${vis.map(i => i.key).join(',')}">全选</button>` : ''}
+              <button type="button" class="cat-add" data-act="new" data-idx="${ci}">＋ 新建动作</button>
+            </div>
+          </div>`
+        if (!vis.length) {
+          paneHtml += `<p class="cat-empty-tip">该年龄段本类别暂无可选动作，可新建适合此年龄段的低负荷项目。</p>`
+        } else {
+          vis.forEach(it => {
+            const nm = itemName(it, seg)
+            paneHtml += `<div class="exercise-item" data-key="${it.key}">
+              <div class="ex-row">
+                <input type="checkbox" class="ex-check" id="ck_${it.key}" data-role="check" />
+                <div class="ex-main">
+                  <div class="ex-head">
+                    <span class="ex-name">${nm}</span>
+                    <span class="ex-tools">
+                      <span class="ex-badge">组 × ${it.unit}</span>
+                      <button type="button" class="mini-btn" data-act="edit" data-idx="${ci}" data-key="${it.key}">编辑</button>
+                    </span>
+                  </div>
+                  <p class="ex-tip"></p>
+                  <div class="warn-tag-wrap"></div>
+                  <div class="param-row">
+                    <label><input type="number" class="ip-sets" min="0" placeholder="组" /> 组</label>
+                    <span class="param-sym">×</span>
+                    <label><input type="number" class="ip-reps" min="0" placeholder="${it.unit}" /> ${it.unit}</label>
+                  </div>
+                  ${it.hr ? `<div class="hr-row">（心率：<input type="text" class="ip-hr" placeholder="如 110-120" /> 次/分）</div>` : ''}
+                </div>
+              </div>
+            </div>`
+          })
+        }
+        paneHtml += `</div>`
+      })
+    }
+    paneHtml += `</div>` // .cat-pane
+  })
+  wrap.innerHTML = paneHtml
+
+  // --- 3. tab 按钮点击切换 ---
+  tabsEl.querySelectorAll('.cat-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tk = btn.dataset.tab
+      if (tk === ACTIVE_TAB) return
+      ACTIVE_TAB = tk
+      tabsEl.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tk))
+      wrap.querySelectorAll('.cat-pane').forEach(p => p.classList.toggle('is-active', p.dataset.pane === tk))
+    })
+  })
+
+  // --- 4. 绑定 item 行为 ---
+  // 点击 item 头部切换勾选
+  $$('.ex-head').forEach(head => {
+    head.addEventListener('click', (e) => {
+      if (e.target.closest('[data-act]')) return
+      const box = head.closest('.exercise-item').querySelector('.ex-check')
+      box.checked = !box.checked
+      applyItemState(box)
+      saveToStorage()
+      updateTabCounts()
+      updateStepper()
+    })
+  })
+  // 小节"全选/取消全选"
+  $$('.cat-select').forEach(btn => {
+    btn.addEventListener('click', () => toggleCat(btn.dataset.catKey))
+  })
+  // 初始按未勾选同步参数行的显隐
+  $$('.exercise-item').forEach(item => {
+    applyItemState(item.querySelector('.ex-check'), false)
+  })
+  refreshSegVisual()
+  // 同步小节"全选"按钮文案
+  updateCatSectionLabels()
+}
+
+// 每个 checkbox 的选中态表现
+function applyItemState(box, sync = true) {
+  const item = box.closest('.exercise-item')
+  const on = box.checked
+  item.classList.toggle('selected', on)
+  const paramRow = item.querySelector('.param-row')
+  const hrRow = item.querySelector('.hr-row')
+  if (paramRow) paramRow.style.display = on ? '' : 'none'
+  if (hrRow) hrRow.style.display = on ? '' : 'none'
+  if (sync) {
+    updateCountAndCats()
+    renderSheet()
+  }
+}
+
+// 类别全选/全不选
+function toggleCat(keys) {
+  const seg = getSeg()
+  const list = keys.split(',').filter(Boolean)
+  const allOn = list.every(k => document.querySelector(`#ck_${k}`).checked)
+  list.forEach(k => {
+    const box = document.querySelector(`#ck_${k}`)
+    box.checked = allOn ? false : true
+    if (!allOn) ensureRecItem(k, seg)
+    applyItemState(box)
+  })
+  saveToStorage()
+}
+
+// 统计已选数、刷新小节"全选/取消"按钮文案
+function updateCountAndCats() {
+  const n = $$('.ex-check:checked').length
+  $('#selCount').textContent = n
+  updateCatSectionLabels()
+  // 同步 tab 已选数
+  updateTabCounts()
+  // 同步步骤条
+  updateStepper()
+}
+
+// 每个小节的"全选/取消全选"按钮文案
+function updateCatSectionLabels() {
+  const seg = getSeg()
+  $$('.cat-section').forEach(sec => {
+    const btn = sec.querySelector('.cat-select')
+    if (!btn) return
+    const ci = Number(sec.dataset.idx)
+    const cat = CATS[ci]; if (!cat) return
+    const vis = cat.items.filter(it => itemVisible(it, seg))
+    const allOn = vis.length > 0 && vis.every(it => {
+      const box = document.querySelector(`#ck_${it.key}`)
+      return box && box.checked
+    })
+    btn.textContent = allOn ? '取消全选' : '全选'
+  })
+}
+
+// tab 计数：每个顶层 tab 已选多少项（从 DOM 反查，安全）
+function updateTabCounts() {
+  TABS.forEach(tab => {
+    let selCount = 0
+    tab.cats.forEach(ci => {
+      const cat = CATS[ci]; if (!cat) return
+      cat.items.forEach(it => {
+        const box = document.querySelector(`.exercise-item[data-key="${it.key}"] .ex-check`)
+        if (box && box.checked) selCount++
+      })
+    })
+    const cntEl = document.querySelector(`[data-tab-count="${tab.key}"]`)
+    if (cntEl) cntEl.textContent = `已选 ${selCount}`
+  })
+}
+
+// 依年龄段刷新：提示文案 / 风险标签
+function refreshSegVisual() {
+  const seg = getSeg()
+  const meta = SEG[seg]
+  // 切换选中态
+  $$('.seg').forEach(el => el.classList.toggle('is-active', el.dataset.seg === seg))
+  $('#segHint').textContent = meta.hint
+  // 每个项目提示语与警告（当前年龄段可见项）
+  CATS.forEach(cat => {
+    cat.items.forEach(it => {
+      const itemEl = document.querySelector(`.exercise-item[data-key="${it.key}"]`)
+      if (!itemEl) return
+      itemEl.querySelector('.ex-tip').textContent = it.guide[seg]
+      const wrap = itemEl.querySelector('.warn-tag-wrap')
+      const warn = it.warn && it.warn[seg]
+      if (wrap) wrap.innerHTML = warn ? `<span class="warn-tag">${esc(warn)}</span>` : ''
+    })
+  })
+}
+
+// 推荐值
+function ensureRecItem(key, seg) {
+  const it = EX_MAP[key]
+  if (!it) return
+  const rec = (it.rec && it.rec[seg]) || [0, 0]
+  const itemEl = document.querySelector(`.exercise-item[data-key="${key}"]`)
+  if (!itemEl) return
+  itemEl.querySelector('.ip-sets').value = rec[0] || ''
+  itemEl.querySelector('.ip-reps').value = rec[1] || ''
+}
+
+// 清空所有训练项目（含参数与勾选）。不涉及患者信息。
+function clearAll() {
+  CATS.forEach(cat => {
+    cat.items.forEach(it => {
+      const itemEl = document.querySelector(`.exercise-item[data-key="${it.key}"]`)
+      if (!itemEl) return
+      itemEl.querySelector('.ex-check').checked = false
+      itemEl.querySelector('.ip-sets').value = ''
+      itemEl.querySelector('.ip-reps').value = ''
+      const hr = itemEl.querySelector('.ip-hr')
+      if (hr) hr.value = ''
+      applyItemState(itemEl.querySelector('.ex-check'))
+    })
+  })
+  updateCatCounts()
+}
+
+// 打印/批量后清空：保留医生签名图片与日期，其余全部重置
+function clearAfterPrint() {
+  // 1. 患者信息（姓名/年龄/频次/时长）
+  ;['pName', 'pAge', 'pFreq', 'pMins'].forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.value = ''
+  })
+  // 2. 日期：保留用户填的日期，但如果有改过就保留；否则重置为今天
+  //    这里按用户原意"除了日期"——意思是保留日期，不重置
+  // 3. 重置年龄段为默认 50–64 岁
+  const defaultRadio = document.querySelector('input[name="seg"][value="50"]')
+  if (defaultRadio) defaultRadio.checked = true
+  // 4. 清空所有勾选与参数
+  clearAll()
+  // 5. 隐藏 HR 提示（因为年龄被清空了）
+  const hint = $('#hrHint')
+  if (hint) hint.style.display = 'none'
+  // 6. 重建类目列表（年龄段切换生效）
+  buildExerciseList()
+  // 7. 重渲染预览
+  renderSheet()
+  // 8. 同步步骤条与角标
+  updateStepper()
+  // 9. 写 localStorage
+  saveToStorage()
+  // 10. 滚动到顶部
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch (e) { window.scrollTo(0, 0) }
+  // 11. 视觉提示
+  flashToast('✓ 已清空，开始下一位患者')
+}
+
+// 步骤条状态同步（根据当前填写情况）
+function updateStepper() {
+  const steps = $$('.stepper .step')
+  if (!steps.length) return
+  // step 1: 已选年龄段
+  steps[0].classList.toggle('done', true).toString() // 始终 done
+  steps[0].classList.add('done')
+  // step 2: 患者信息是否填写（至少有一个值）
+  const infoFilled = !!($('#pName') && $('#pName').value) || !!($('#pAge') && $('#pAge').value)
+  steps[1].classList.toggle('done', infoFilled)
+  // step 3: 是否选了至少 1 个项目
+  const hasSel = $$('.exercise-item .ex-check:checked').length > 0
+  steps[2].classList.toggle('done', hasSel)
+  // step 4: 是否可打印（至少选了项目）
+  steps[3].classList.toggle('done', hasSel)
+  // 当前激活：哪个是最新完成的，下一个就是 active
+  steps.forEach(s => s.classList.remove('active'))
+  let activeIdx = 0
+  if (!infoFilled) activeIdx = 1
+  else if (!hasSel) activeIdx = 2
+  else activeIdx = 3
+  steps[activeIdx].classList.add('active')
+
+  // 角标同步
+  const seg = getSeg()
+  const segMeta = (typeof SEG === 'object' && SEG && SEG[seg]) ? SEG[seg] : null
+  const segBadge = $('#segBadge')
+  if (segBadge && segMeta) {
+    segBadge.textContent = segMeta.label + ' · ' + segMeta.sub
+    segBadge.classList.add('has-value')
+  }
+  const infoBadge = $('#infoBadge')
+  if (infoBadge) {
+    if (infoFilled) {
+      const name = $('#pName').value.trim()
+      const age = $('#pAge').value.trim()
+      infoBadge.textContent = name ? `${name}${age ? ' / ' + age + '岁' : ''}` : '已填写'
+      infoBadge.classList.add('has-value')
+    } else {
+      infoBadge.textContent = '未填写'
+      infoBadge.classList.remove('has-value')
+    }
+  }
+  const selBadge = $('#selBadge')
+  if (selBadge) {
+    const n = $$('.exercise-item .ex-check:checked').length
+    selBadge.textContent = `已选 ${n} 项`
+    selBadge.classList.toggle('has-value', n > 0)
+    selBadge.classList.toggle('has-warn', n === 0)
+  }
+  const printBadge = $('#printBadge')
+  if (printBadge) {
+    printBadge.textContent = hasSel ? '可打印' : '未就绪'
+    printBadge.classList.toggle('has-value', hasSel)
+    printBadge.classList.toggle('has-warn', !hasSel)
+  }
+}
+
+// 顶部提示气泡（自动消失）
+let _toastEl = null
+function flashToast(msg) {
+  if (!_toastEl) {
+    _toastEl = document.createElement('div')
+    _toastEl.className = 'toast'
+    document.body.appendChild(_toastEl)
+  }
+  _toastEl.textContent = msg
+  _toastEl.classList.add('show')
+  clearTimeout(_toastEl._t)
+  _toastEl._t = setTimeout(() => _toastEl.classList.remove('show'), 2400)
+}
+
+// 在年龄字段下方显示目标心率建议，并预填 HR 输入的 placeholder
+function updateHrHint() {
+  const ageVal = $('#pAge').value
+  const t = targetHrByAge(ageVal)
+  const hint = $('#hrHint')
+  if (hint) {
+    if (t) {
+      hint.innerHTML = `推荐目标心率 <b>${t.low}–${t.high}</b> 次/分（HRmax≈${t.max}，50–70% 强度区间）`
+      hint.style.display = ''
+    } else {
+      hint.textContent = ''
+      hint.style.display = 'none'
+    }
+  }
+  // 同步所有 HR 输入框的 placeholder，方便医师参考
+  $$('.ip-hr').forEach(inp => {
+    inp.placeholder = t ? `${t.low}-${t.high}` : '如 110-120'
+  })
+}
+
+// ---------- 读取当前表单 ----------
+function readForm() {
+  const seg = getSeg()
+  const pick = (id, num) => {
+    const v = $(id).value.trim()
+    return num && v !== '' ? Number(v) : v
+  }
+  const list = []
+  CATS.forEach(cat => {
+    const rows = []
+    cat.items.forEach(it => {
+      if (!itemVisible(it, seg)) return
+      const itemEl = document.querySelector(`.exercise-item[data-key="${it.key}"]`)
+      if (!itemEl) return
+      const checked = itemEl.querySelector('.ex-check').checked
+      const sets = itemEl.querySelector('.ip-sets').value.trim()
+      const reps = itemEl.querySelector('.ip-reps').value.trim()
+      const hr = it.hr ? (itemEl.querySelector('.ip-hr').value.trim()) : ''
+      rows.push({ it, checked, sets, reps, hr })
+    })
+    list.push({ cat, rows })
+  })
+  return {
+    seg,
+    segMeta: SEG[seg],
+    list,
+    name: pick('#pName'),
+    age: pick('#pAge'),
+    freq: pick('#pFreq'),
+    mins: pick('#pMins'),
+    date: $('#pDate').value || todayLocalStr()
+  }
+}
+
+// ---------- 渲染 A4 处方 ----------
+function blank(n = 3) { return `<span class="rx-blank">${'\u00A0'.repeat(n)}</span>` }
+function blankSm(n = 2) { return `<span class="rx-blank sm">${'\u00A0'.repeat(n)}</span>` }
+
+function doseText(sets, reps, unit) {
+  const setStr = sets !== '' && Number(sets) > 0 ? sets : null
+  const repStr = reps !== '' && Number(reps) > 0 ? reps : null
+  if (setStr && repStr) return `${setStr} 组 × ${repStr} ${unit}`
+  if (setStr) return `${setStr} 组 × ${blank(2)} ${unit}`
+  if (repStr) return `${blank(1)} × ${repStr} ${unit}`
+  return `${blank(1)} 组 × ${blank(2)} ${unit}`
+}
+
+function renderSheet() {
+  const f = readForm()
+  const selRows = []
+  let totalSelected = 0
+  f.list.forEach(({ cat, rows }) => {
+    const picked = rows.filter(r => r.checked)
+    if (picked.length) {
+      totalSelected += picked.length
+      selRows.push({ cat, picked })
+    }
+  })
+
+  let html = ''
+  // ---- 头部 ----
+  html += `<div class="rx-head">
+    <div class="rx-meta">
+      <span class="rx-seg-tag">${f.segMeta.label} · ${f.segMeta.sub}</span>
+    </div>
+    <div class="rx-title">骨质疏松患者运动处方</div>
+    <div class="rx-en">OSTEOPOROSIS EXERCISE PRESCRIPTION</div>
+    <hr class="rx-divider" />
+    <hr class="rx-divider sub" />
+  </div>`
+
+  // ---- 患者信息 ----
+  html += `<div class="rx-patient">
+      <div class="p-row"><span class="k">患者姓名：</span>${f.name ? `<b class="val">${esc(f.name)}</b>` : blank(6)}</div>
+      <div class="p-row"><span class="k">年龄：</span>${f.age !== '' && f.age !== null && f.age !== undefined ? `<b class="val">${esc(String(f.age))} 岁</b>` : blankSm() + ' 岁'}</div>
+      <div class="p-row"><span class="k">训练频次：</span>每周 ${f.freq !== '' && f.freq !== null && f.freq !== undefined ? `<b class="val">${esc(String(f.freq))}</b>` : blankSm()} 次，每次 ${f.mins !== '' && f.mins !== null && f.mins !== undefined ? `<b class="val">${esc(String(f.mins))}</b>` : blankSm()} 分钟</div>
+  </div>`
+
+  // ---- 训练明细 ----
+  html += `<div class="rx-body">`
+  if (totalSelected === 0) {
+    html += `<div class="rx-empty">请在左侧「训练项目选择」中勾选运动项目后生成处方</div>`
+  } else {
+    selRows.forEach(({ cat, picked }) => {
+      html += `<div class="rx-sec"><div class="rx-sec-title">${cat.title}</div>`
+      picked.forEach(r => {
+        const it = r.it
+        const seg = f.seg
+        html += `<div class="rx-item">
+          <div class="rx-item-line">
+            <span class="rx-item-name">${esc(itemName(it, seg))}</span>
+            <span class="rx-item-dose">${doseText(r.sets, r.reps, it.unit)}</span>
+          </div>
+          <div class="rx-item-guide">${esc(it.guide[seg])}</div>
+          ${it.hr ? `<div class="rx-item-guide">心率：${r.hr ? esc(r.hr) : '＿＿＿＿'} 次/分（运动时感觉<b>有点累但还能正常说话</b>为宜）</div>` : ''}
+        </div>`
+      })
+      html += '</div>'
+    })
+  }
+  html += '</div>'
+
+  // ---- 医师签名 ----
+  html += `<div class="rx-sign">
+    <div class="sig-block">
+      <div class="sig-label">处方医师签名：</div>
+      <div class="sig-line sig-image-host">${STATE.sigImg ? `<img class="sig-image" src="${STATE.sigImg}" alt="医师签名" />` : ''}</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-label">签名日期：</div>
+      <div class="sig-line">${esc(f.date)}</div>
+    </div>
+  </div>`
+
+  // ---- 页脚 ----
+  html += `<div class="rx-foot">
+    <div class="rx-foot-notice">本处方为个性化骨质疏松运动处方，仅适用于患者本人，运动过程中全程保证无痛原则，如有疼痛或不适，请及时联系相应康复老师。本处方为阶段性训练方案，每月需及时回诊进行方案调整，祝您早日康复——天津医科大学总医院骨质疏松康复团队。</div>
+  </div>`
+
+  $('#sheet').innerHTML = html
+  $('#selCount').textContent = totalSelected
+
+  // 如果移动端全屏预览遮罩是开着的，同步更新遮罩里的克隆版本
+  const overlay = $('#pvOverlay')
+  if (overlay && overlay.classList.contains('open')) {
+    const body = $('#pvOverlayBody')
+    const src = $('#sheet')
+    if (body && src) {
+      body.innerHTML = ''
+      const clone = src.cloneNode(true)
+      clone.removeAttribute('id')
+      clone.style.transform = ''
+      body.appendChild(clone)
+      requestAnimationFrame(() => {
+        const avail = body.clientWidth - 24
+        const w = clone.offsetWidth
+        if (avail > 20 && w > avail) {
+          clone.style.transform = `scale(${avail / w})`
+        }
+      })
+    }
+  }
+
+  // 屏幕绘制分页标记（在 fitSheet 之后由调用方触发，此处先不算；保持函数纯净）
+}
+
+// ---------- 屏幕分页标记 ----------
+function paintPageBreaks() {
+  const sheet = $('#sheet')
+  if (!sheet) return
+  // 1mm = 96/25.4 px
+  const MM = 96 / 25.4
+  const PAGE_MM = 297
+  // 先清旧
+  sheet.querySelectorAll('.page-break-marker').forEach(n => n.remove())
+  const totalMM = sheet.scrollHeight / MM
+  const pages = Math.max(1, Math.ceil(totalMM / PAGE_MM))
+
+  for (let i = 1; i < pages; i++) {
+    const topMM = i * PAGE_MM - 8 // 提前一点点避免压到下面
+    const m = document.createElement('div')
+    m.className = 'page-break-marker'
+    m.style.top = topMM + 'mm'
+    m.setAttribute('data-pn', String(i + 1))
+    sheet.appendChild(m)
+  }
+
+  // 更新顶栏页数
+  const pc = $('#pageCount')
+  if (pc) pc.textContent = pages
+  const pc2 = $('#pageMeta')
+  if (pc2) {
+    pc2.textContent = pages > 1 ? `${pages} 页 · 超出一页请关注分页` : '单页'
+  }
+}
+
+// ---------- 打印 ----------
+function doPrint() {
+  // 没有任何勾选时不打印
+  if (!$$('.exercise-item .ex-check:checked').length) {
+    flashToast('请先勾选至少 1 个训练项目')
+    return
+  }
+
+  document.body.classList.add('printing')
+  // 确保打印时去掉缩放
+  const host = $('.preview-host')
+  const sheet = $('#sheet')
+  sheet.style.transform = ''
+  host.style.height = ''
+
+  // 用 beforeprint/afterprint 钩子同步状态，避免 setTimeout 与 print 异步执行的竞争
+  let printed = false
+  const cleanup = () => {
+    document.body.classList.remove('printing')
+    fitSheet()
+    window.removeEventListener('afterprint', cleanup)
+    if (printed) return
+    printed = true
+    // 打印对话框关闭后询问用户：是否清空表单开始下一位
+    askClearAfterPrint()
+  }
+  window.addEventListener('afterprint', cleanup)
+  // afterprint 不一定在所有浏览器触发（极少数情况），兜底
+  setTimeout(() => {
+    try { window.print() } finally {
+      // 兜底：500ms 后无论 afterprint 是否触发都询问一次（用户没触发 = 大概率取消了）
+      setTimeout(() => {
+        if (document.body.classList.contains('printing')) {
+          cleanup()
+        }
+      }, 600)
+    }
+  }, 80)
+}
+
+// 打印后询问是否清空表单（保留签名图与日期）
+function askClearAfterPrint() {
+  // 用自定义弹窗比 confirm 更可控、更友好
+  showClearConfirm()
+}
+
+function showClearConfirm() {
+  // 已有遮罩就跳过
+  if ($('#printConfirmMask')) return
+  const mask = document.createElement('div')
+  mask.id = 'printConfirmMask'
+  mask.className = 'confirm-mask'
+  mask.innerHTML = `
+    <div class="confirm-box" role="dialog" aria-modal="true">
+      <div class="confirm-icon">✓</div>
+      <div class="confirm-title">打印完成？</div>
+      <div class="confirm-msg">清空表单开始下一位患者？<br><small>医生签名图片和日期会保留。</small></div>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-soft" data-act="keep">保留</button>
+        <button type="button" class="btn btn-primary" data-act="clear">清空开始下一位</button>
+      </div>
+    </div>
+  `
+  document.body.appendChild(mask)
+  // 显示动画
+  requestAnimationFrame(() => mask.classList.add('open'))
+  // 绑定
+  mask.querySelector('[data-act="keep"]').addEventListener('click', () => {
+    mask.classList.remove('open')
+    setTimeout(() => mask.remove(), 180)
+    flashToast('已保留，可手动修改')
+  })
+  mask.querySelector('[data-act="clear"]').addEventListener('click', () => {
+    mask.classList.remove('open')
+    setTimeout(() => mask.remove(), 180)
+    clearAfterPrint()
+  })
+}
+
+// ---------- 自适应缩放 ----------
+function fitSheet() {
+  const host = $('.preview-host')
+  const sheet = $('#sheet')
+  if (!host || !sheet) return
+  sheet.style.transform = ''
+  host.style.height = ''
+  const avail = host.clientWidth
+  const width = sheet.offsetWidth
+  if (avail > 20 && width > avail) {
+    const scale = (avail - 12) / width
+    sheet.style.transform = `scale(${scale})`
+    host.style.height = Math.ceil(sheet.offsetHeight * scale + 24) + 'px'
+  }
+  // 缩放完成后绘制分页指示
+  paintPageBreaks()
+}
+
+// ---------- 事件绑定 ----------
+function bindEvents() {
+  // 年龄段
+  $$('.seg').forEach(el => {
+    el.addEventListener('click', () => {
+      switchSeg(el.querySelector('input').value)
+    })
+  })
+
+  // 动作列表勾选（事件委托，checkbox 触发 change）
+  $('#exerciseList').addEventListener('change', e => {
+    if (e.target.classList && e.target.classList.contains('ex-check')) {
+      applyItemState(e.target)
+      saveToStorage()
+    }
+  })
+
+  // 动作列表参数输入（事件委托）
+  $('#exerciseList').addEventListener('input', e => {
+    const itemEl = e.target.closest('.exercise-item')
+    if (!itemEl) return
+    renderSheet()
+    saveToStorage()
+  })
+
+  // 动作条目：编辑 / 新建 / 删除（事件委托）
+  $('#exerciseList').addEventListener('click', handleListClick)
+
+  // 弹窗：单位切换同步表头
+  $('#mdUnit').addEventListener('change', syncUnitLabel)
+  // 弹窗：取消 / 关闭
+  $('#mdCancel').addEventListener('click', closeEditor)
+  $('#mdClose').addEventListener('click', closeEditor)
+  $('#mdMask').addEventListener('click', e => { if (e.target === $('#mdMask')) closeEditor() })
+  // 弹窗：保存
+  $('#mdSave').addEventListener('click', saveItem)
+  // 弹窗：删除（仅编辑现有动作时显示）
+  const mdDel = $('#mdDelete')
+  if (mdDel) mdDel.addEventListener('click', deleteCurrentItem)
+
+  // 清空训练项目
+  $('#btnClear').addEventListener('click', () => {
+    if (!confirm('确定清空全部训练项目的勾选与参数吗？')) return
+    clearAll()
+    saveToStorage()
+  })
+
+  // 手动清空（保留医生签名图 + 日期）
+  const btnResetAll = $('#btnResetAll')
+  if (btnResetAll) {
+    btnResetAll.addEventListener('click', () => {
+      if (!confirm('确认清空表单（保留医生签名图与日期）？')) return
+      clearAfterPrint()
+    })
+  }
+
+  // 打印
+  $('#btnPrint2').addEventListener('click', doPrint)
+  $('#btnPdf').addEventListener('click', doPrint)
+
+  // 兜底（某些浏览器直接 window.print 时不触发 beforeprint 样式，手动保证）
+  window.addEventListener('resize', () => { if (!document.body.classList.contains('printing')) fitSheet() })
+
+  // 签名图片上传
+  bindSignatureUpload()
+
+  // 移动端全屏预览遮罩
+  bindPvOverlay()
+
+  // 患者信息输入 -> 重绘预览（元素存在时才绑定，避免单个字段缺失影响整体初始化）
+  ;['pName', 'pAge', 'pFreq', 'pMins', 'pDate'].forEach(id => {
+    const el = document.getElementById(id)
+    if (el) {
+      el.addEventListener('input', () => {
+        renderSheet()
+        updateHrHint()
+        updateStepper()
+      })
+    }
+  })
+
+  // 步骤条点击：跳转到对应卡片
+  $$('.stepper .step').forEach(s => {
+    s.addEventListener('click', () => {
+      const idx = Number(s.dataset.step)
+      const map = { 1: '#step1Card', 2: '#step2Card', 3: '#step3Card', 4: '#step4Card' }
+      const el = $(map[idx])
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  })
+}
+
+// ---------- 移动端全屏预览遮罩 ----------
+function bindPvOverlay() {
+  const fab = $('#pvFab')
+  const overlay = $('#pvOverlay')
+  const body = $('#pvOverlayBody')
+  const closeBtn = $('#pvClose')
+  if (!fab || !overlay || !body || !closeBtn) return
+
+  // 点击 FAB：克隆当前 #sheet 到遮罩里，打开遮罩，重算缩放
+  fab.addEventListener('click', () => {
+    const src = $('#sheet')
+    if (!src) return
+    // 每次都重新克隆一份，避免主预览和遮罩互相干扰样式
+    body.innerHTML = ''
+    const clone = src.cloneNode(true)
+    clone.removeAttribute('id')
+    body.appendChild(clone)
+    overlay.classList.add('open')
+    // 锁定背景滚动
+    document.body.style.overflow = 'hidden'
+    // 缩放：让 A4 宽度填满 body 减去内边距
+    requestAnimationFrame(fitOverlaySheet)
+  })
+
+  // 关闭按钮 + 点击空白关闭
+  closeBtn.addEventListener('click', closePvOverlay)
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closePvOverlay()
+  })
+  // ESC 关闭
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) closePvOverlay()
+  })
+
+  function closePvOverlay() {
+    overlay.classList.remove('open')
+    document.body.style.overflow = ''
+    body.innerHTML = ''
+  }
+
+  function fitOverlaySheet() {
+    const sheet = body.querySelector('.sheet')
+    if (!sheet) return
+    sheet.style.transform = ''
+    sheet.style.transformOrigin = 'top center'
+    // 等待布局完成
+    requestAnimationFrame(() => {
+      const avail = body.clientWidth - 24
+      const w = sheet.offsetWidth
+      if (avail > 20 && w > avail) {
+        sheet.style.transform = `scale(${avail / w})`
+      }
+    })
+  }
+}
+
+// ---------- 签名图片上传 ----------
+function bindSignatureUpload() {
+  const file = $('#sigFile')
+  const upBtn = $('#sigUploadBtn')
+  const clearBtn = $('#sigClearBtn')
+  if (!file || !upBtn) return
+  upBtn.addEventListener('click', () => file.click())
+  file.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0]
+    if (!f) return
+    if (!/^image\//.test(f.type)) {
+      alert('请选择图片文件（PNG / JPG / SVG 等）')
+      file.value = ''
+      return
+    }
+    if (f.size > 1024 * 1024) {
+      if (!confirm(`图片较大（${(f.size/1024).toFixed(0)} KB），可能超过 localStorage 容量。继续吗？`)) {
+        file.value = ''
+        return
+      }
+    }
+    const reader = new FileReader()
+    reader.onload = ev => {
+      STATE.sigImg = String(ev.target.result || '')
+      updateSigStatus()
+      renderSheet()
+      saveToStorage()
+    }
+    reader.readAsDataURL(f)
+  })
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (!STATE.sigImg) return
+      if (!confirm('确定清除已上传的签名图片吗？')) return
+      STATE.sigImg = ''
+      file.value = ''
+      updateSigStatus()
+      renderSheet()
+      saveToStorage()
+    })
+  }
+}
+function updateSigStatus() {
+  const status = $('#sigStatus')
+  const clearBtn = $('#sigClearBtn')
+  if (!status) return
+  if (STATE.sigImg) {
+    const kb = Math.round((STATE.sigImg.length * 3) / 4 / 1024)
+    status.textContent = `已上传（约 ${kb} KB）`
+    if (clearBtn) clearBtn.hidden = false
+  } else {
+    status.textContent = '未上传'
+    if (clearBtn) clearBtn.hidden = true
+  }
+}
+
+// ---------- 初始化 ----------
+function todayLocalStr() {
+  const d = new Date()
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function init() {
+  const d = $('#pDate')
+  // 用本地日期（不是 UTC），避免东八区 0:00–8:00 用户无法选今天
+  d.value = todayLocalStr()
+  d.max = todayLocalStr()
+  loadFromStorage()
+  buildExerciseList()
+  // 应用 localStorage 中保存的勾选与参数（若有）
+  if (window.__pendingSel && Object.keys(window.__pendingSel).length) {
+    writeSelections(window.__pendingSel)
+    window.__pendingSel = null
+  }
+  bindEvents()
+  renderSheet()
+  updateHrHint()
+  updateTabCounts()
+  updateStepper()
+  requestAnimationFrame(fitSheet)
+  setTimeout(fitSheet, 60)
+  setTimeout(fitSheet, 300)
+}
+
+document.addEventListener('DOMContentLoaded', init)
+
+  </script>
+</body>
+</html>
